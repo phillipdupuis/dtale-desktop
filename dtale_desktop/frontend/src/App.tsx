@@ -1,9 +1,7 @@
 import React, { useEffect, useReducer } from "react";
-import { Layout, Button, PageHeader, Spin, Collapse, Tag, Space, Popover } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
+import { Layout, Button, PageHeader, Spin } from "antd";
 import "antd/dist/antd.css";
 import "./App.css";
-import DataSourceViewer from "./components/DataSourceViewer";
 import SourceList from "./components/SourceList";
 import ConfigEditor from "./components/SourceConfigEditor";
 import { addSources, setSelectedSource } from "./store/actions";
@@ -60,33 +58,6 @@ const App = () => {
     });
   }, []);
 
-  // const loadSourceNodes = (source: DataSource) => {
-  //   dispatch(updateSource({ ...source, loading: true }));
-  //   httpRequest({
-  //     method: "POST",
-  //     url: "/source/nodes/list/",
-  //     body: source,
-  //     resolve: (data) => dispatch(updateSource({ ...data, loading: false })),
-  //     reject: (error) =>
-  //       dispatch(updateSource({ ...source, loading: false, error: error })),
-  //   });
-  // };
-
-  // useEffect(() => {
-  //   if (state.sources !== undefined) {
-  //     state.sources
-  //       .filter(
-  //         (source) =>
-  //           !source.nodesFullyLoaded &&
-  //           !source.loading &&
-  //           Object.keys(source.nodes || {}).length === 0
-  //       )
-  //       .forEach((source) => {
-  //         loadSourceNodes(source);
-  //       });
-  //   }
-  // }, [state.sources]);
-
   return (
     <Layout className="layout">
       <Content style={{ width: "100vw" }}>
@@ -111,68 +82,6 @@ const App = () => {
             <Spin />
           ) : (
             <SourceList sources={state.sources} dispatch={dispatch} />
-            // <Collapse defaultActiveKey={[]}>
-            //   {state.sources.map((source) => (
-            //     <SourcePanel source={source} dispatch={dispatch} key={source.id} />
-                // <Collapse.Panel
-                //   key={source.id}
-                //   disabled={source.loading}
-                //   header={
-                //     <Space>
-                //       <span>{source.name}</span>
-                //       <Tag>
-                //         {source.loading ? (
-                //           <Spin size="small" />
-                //         ) : (
-                //           `${Object.keys(source.nodes || {}).length} results`
-                //         )}
-                //       </Tag>
-                //       {!source.error ? null : (
-                //         <Tag color="error">
-                //           <Popover content={source.error} />
-                //         </Tag>
-                //       )}
-                //       {!Object.values(source.nodes || {}).some(
-                //         (node) => node.dtaleUrl
-                //       ) ? null : (
-                //         <Tag color="green">
-                //           {`${
-                //             Object.values(source.nodes || {}).filter(
-                //               (node) => node.dtaleUrl
-                //             ).length
-                //           } active`}
-                //         </Tag>
-                //       )}
-                //       {source.nodesFullyLoaded ? null : (
-                //         <Button
-                //           key={`${source.id}loadmore`}
-                //           size="small"
-                //           onClick={(event) => {
-                //             event.stopPropagation();
-                //             loadSourceNodes(source);
-                //           }}
-                //         >
-                //           Load more
-                //         </Button>
-                //       )}
-                //     </Space>
-                //   }
-                //   extra={
-                //     <Button
-                //       icon={<SettingOutlined />}
-                //       onClick={(event) => {
-                //         event.stopPropagation();
-                //         dispatch(setSelectedSource(source));
-                //       }}
-                //     >
-                //       Settings
-                //     </Button>
-                //   }
-                // >
-                //   <DataSourceViewer dispatch={dispatch} source={source} />
-                // </Collapse.Panel>
-            //   ))}
-            // </Collapse>
           )}
         </div>
         {state.selectedSource ? (

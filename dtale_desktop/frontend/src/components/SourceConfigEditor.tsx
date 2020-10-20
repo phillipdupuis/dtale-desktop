@@ -40,7 +40,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
     }
   };
 
-  const submitCreate = async () => {
+  const submitCreate = () => {
     if (checkRequired()) {
       const { nodes, ...updatedSource } = clone;
       httpRequest({
@@ -56,7 +56,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
     }
   };
 
-  const submitUpdate = async () => {
+  const submitUpdate = () => {
     if (checkRequired()) {
       const { nodes, ...updatedSource } = clone;
       httpRequest({

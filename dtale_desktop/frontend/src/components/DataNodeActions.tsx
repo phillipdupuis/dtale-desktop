@@ -66,21 +66,20 @@ export const ShutdownButton: React.FC<{
       title="shut down"
       onClick={() => {
         setLoading(true);
-        fetch("node/kill/", {
+        httpRequest({
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(node),
-        })
-          .then((response) => response.json())
-          .then((node: DataNode) => {
-            dispatch(updateNode(node));
+          url: "node/kill/",
+          body: node,
+          resolve: (data: DataNode) => {
+            dispatch(updateNode(data));
             setLoading(false);
-          })
-          .catch((error) => {
+          },
+          reject: (error) => {
             const newNode = { ...node, error: error };
             dispatch(updateNode(newNode));
-            setLoading(true);
-          });
+            setLoading(false);
+          }
+        });
       }}
       disabled={!node.dtaleUrl}
       loading={loading}

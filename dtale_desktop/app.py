@@ -1,4 +1,5 @@
 import os
+import subprocess
 import socket
 from typing import List
 
@@ -26,6 +27,7 @@ def _get_host() -> str:
 
 def _get_port() -> int:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("", 0))
     port = sock.getsockname()[1]
     sock.close()
     return port
@@ -64,6 +66,11 @@ def register_any_existing_sources() -> None:
 async def frontend_view():
     with open(os.path.join(REACT_APP_DIR, "index.html")) as f:
         return f.read()
+
+
+@app.get("/health/")
+async def health_check():
+    return Response(status_code=204)
 
 
 @app.get("/manifest.json")
@@ -129,6 +136,7 @@ async def kill_data_instance(node: Node):
 
 
 def run():
+    subprocess.Popen(["dtaledesktop_open_browser", f"http://{HOST}:{PORT}"])
     uvicorn.run(app, host=HOST, port=PORT, debug=True)
 
 

@@ -43,6 +43,11 @@ setup(
             "frontend/build/static/js/*",
         ]
     },
-    entry_points={"console_scripts": ["dtaledesktop = dtale_desktop.app:run"]},
+    entry_points={
+        "console_scripts": [
+            "dtaledesktop = dtale_desktop.app:run",
+            "dtaledesktop_open_browser = dtale_desktop.open_browser:main",
+        ]
+    },
     classifiers=classifiers,
 )
