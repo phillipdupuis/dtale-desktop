@@ -20,12 +20,13 @@ classifiers = [
 install_requires = [
     "dtale",
     "fastapi",
+    "uvicorn",
     "aiofiles",
 ]
 
 setup(
     name="dtaledesktop",
-    version="0.0.1",
+    version="0.0.3",
     description="Manage your D-Tale instances",
     license="MIT",
     long_description=readme(),

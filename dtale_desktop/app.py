@@ -15,7 +15,9 @@ from dtale_desktop.models import (
     Node,
     register_existing_source,
     LOADERS_DIR,
+    get_node_by_data_id,
 )
+from dtale_desktop.pydantic_utils import BaseApiModel
 
 
 def _get_host() -> str:
@@ -114,6 +116,13 @@ async def update(serialized: DataSourceSerialized):
     return source.serialize()
 
 
+@app.post("/source/toggle-visible/", response_model=DataSourceSerialized)
+async def toggle_visible(serialized: DataSourceSerialized):
+    source = serialized.deserialize()
+    source.visible = not source.visible
+    return source.serialize()
+
+
 @app.post("/source/nodes/list/", response_model=DataSourceSerialized)
 async def load_nodes(serialized: DataSourceSerialized):
     source = serialized.deserialize()
@@ -133,6 +142,31 @@ async def kill_data_instance(node: Node):
     source = SOURCES[node.source_id]
     source.kill_node(node.data_id)
     return source.get_node(node.data_id)
+
+
+class VisibilityChanges(BaseApiModel):
+    show_sources: List[str]
+    hide_sources: List[str]
+    show_nodes: List[str]
+    hide_nodes: List[str]
+
+
+@app.post("/update-filters/", response_model=List[DataSourceSerialized])
+async def update_filters(changes: VisibilityChanges):
+    updated_source_ids = set(changes.show_sources + changes.hide_sources)
+    for source_id in changes.show_sources:
+        SOURCES[source_id].visible = True
+    for source_id in changes.hide_sources:
+        SOURCES[source_id].visible = False
+    for data_id in changes.show_nodes:
+        node = get_node_by_data_id(data_id)
+        node.visible = True
+        updated_source_ids.add(node.source_id)
+    for data_id in changes.hide_nodes:
+        node = get_node_by_data_id(data_id)
+        node.visible = False
+        updated_source_ids.add(node.source_id)
+    return [SOURCES[source_id].serialize() for source_id in updated_source_ids]
 
 
 def run():

@@ -78,7 +78,7 @@ export const ShutdownButton: React.FC<{
             const newNode = { ...node, error: error };
             dispatch(updateNode(newNode));
             setLoading(false);
-          }
+          },
         });
       }}
       disabled={!node.dtaleUrl}

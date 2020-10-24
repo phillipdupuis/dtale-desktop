@@ -5,12 +5,14 @@ export type DataNode = {
   dtaleUrl: null | string;
   dtaleChartsUrl: null | string;
   error?: string;
+  visible: boolean;
 };
 
 export type DataSource = {
   id: string;
   name: string;
   packageName: string;
+  packagePath: string;
   nodes?: { [k: string]: DataNode };
   nodesFullyLoaded: boolean;
   error: null | string;
@@ -25,9 +27,11 @@ export type DataSource = {
 export type RootState = {
   sources?: DataSource[];
   selectedSource: DataSource | null;
+  openModal: null | "filters";
 };
 
 export const initialState: RootState = {
   sources: undefined,
   selectedSource: null,
+  openModal: null,
 };

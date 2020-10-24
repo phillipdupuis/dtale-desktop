@@ -100,7 +100,9 @@ def move_data_source_package(
     package: DataSourcePackage, to_directory: str, remove_old: bool = True
 ) -> DataSourcePackage:
     new_path = os.path.join(to_directory, package.package_name)
-    shutil.copytree(package.path, new_path, dirs_exist_ok=True)
+    if os.path.exists(new_path):
+        shutil.rmtree(new_path)
+    shutil.copytree(package.path, new_path)
     if remove_old:
         shutil.rmtree(package.path)
     return load_data_source_package(new_path, package.package_name)

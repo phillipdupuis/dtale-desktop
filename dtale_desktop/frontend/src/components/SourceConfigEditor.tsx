@@ -1,5 +1,6 @@
 import React, { useState, Dispatch } from "react";
-import { Drawer, Button, Input, Alert } from "antd";
+import { Drawer, Button, Input, Alert, notification } from "antd";
+import { CopyOutlined } from "@ant-design/icons";
 import { httpRequest } from "../utils/requests";
 import { addSources, updateSource, setSelectedSource } from "../store/actions";
 import { DataSource } from "../store/state";
@@ -75,7 +76,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
   return (
     <Drawer
       title={mode === "new" ? "Add Data Source" : "Edit Data Source"}
-      width={720}
+      width={800}
       onClose={() => dispatch(setSelectedSource(null))}
       visible={true}
     >
@@ -87,8 +88,30 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
           onClose={() => setError(null)}
         />
       ) : null}
-      <Label text="Name" />
+      {mode === "new" ? null : (
+        <Input
+          style={{ marginTop: 5, marginBottom: 5 }}
+          disabled={true}
+          defaultValue={clone.packagePath}
+          size="small"
+          addonBefore="Package"
+          addonAfter={
+            <CopyOutlined
+              onClick={() =>
+                navigator.clipboard.writeText(clone.packagePath).then(() =>
+                  notification.open({
+                    message: "Copied to clipboard!",
+                    duration: 1,
+                  })
+                )
+              }
+            />
+          }
+        />
+      )}
       <Input
+        style={{ marginTop: 5, marginBottom: 5 }}
+        addonBefore="Name"
         disabled={!source.editable}
         defaultValue={clone.name}
         onChange={(e) => {
@@ -104,7 +127,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
         onChange={(v) => {
           clone.listPaths = v;
         }}
-        width="600"
+        width="720"
         maxLines={16}
         minLines={16}
       />
@@ -116,7 +139,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
         onChange={(v) => {
           clone.getData = v;
         }}
-        width="600"
+        width="720"
         maxLines={16}
         minLines={16}
       />
@@ -133,7 +156,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
             }
           }}
         >
-          Submit
+          {mode === "new" ? "Create source" : "Save changes"}
         </Button>
       ) : null}
     </Drawer>

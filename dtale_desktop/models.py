@@ -10,7 +10,7 @@ from typing import (
     Awaitable,
     Optional,
     Union,
-    OrderedDict as OrderedDict,
+    Dict,
 )
 
 import pandas as pd
@@ -33,15 +33,16 @@ _ListPaths = Callable[..., Union[List[str], Awaitable[List[str]]]]
 _GetData = Callable[[str], Union[pd.DataFrame, Awaitable[pd.DataFrame]]]
 _SaveData = Callable[[str, pd.DataFrame], None]
 
-SOURCES: OrderedDict[str, "DataSource"] = ordereddict()
+SOURCES: Dict[str, "DataSource"] = ordereddict()
 
 
 class DataSource:
     name: str
     package_name: str
+    package_path: str
     visible: bool
     editable: bool
-    nodes: OrderedDict[str, "Node"]
+    nodes: Dict[str, "Node"]
     nodes_fully_loaded: bool
     error: Optional[str]
     _list_paths: _ListPaths
@@ -52,6 +53,7 @@ class DataSource:
         self,
         name: str,
         package_name: str,
+        package_path: str,
         list_paths: _ListPaths,
         get_data: _GetData,
         save_data: Optional[_SaveData] = None,
@@ -61,6 +63,7 @@ class DataSource:
         try:
             self.name = name
             self.package_name = package_name
+            self.package_path = package_path
             self.visible = visible
             self.editable = editable
             self.nodes = ordereddict()
@@ -97,6 +100,7 @@ class DataSource:
             id=self.id,
             name=self.name,
             package_name=self.package_name,
+            package_path=self.package_path,
             nodes=self.nodes,
             nodes_fully_loaded=self.nodes_fully_loaded,
             error=self.error,
@@ -196,7 +200,8 @@ class DataSourceSerialized(BaseApiModel):
     id_: str = Field(alias="id")
     name: str
     package_name: str = ""
-    nodes: OrderedDict[str, "Node"] = Field(default_factory=ordereddict)
+    package_path: str = ""
+    nodes: Dict[str, "Node"] = Field(default_factory=ordereddict)
     nodes_fully_loaded: bool = False
     error: Optional[str] = None
     visible: bool = True
@@ -204,7 +209,6 @@ class DataSourceSerialized(BaseApiModel):
     list_paths: str
     get_data: str
     save_data: str
-    error: str
 
     @root_validator(pre=True)
     def validate_package_name(cls, values: dict):
@@ -220,6 +224,7 @@ class DataSourceSerialized(BaseApiModel):
         return DataSource(
             name=package.metadata_module.display_name,
             package_name=self.package_name,
+            package_path=package.path,
             list_paths=package.list_paths_module.main,
             get_data=package.get_data_module.main,
             visible=self.visible,
@@ -281,6 +286,7 @@ class Node(BaseApiModel):
     dtale_url: Optional[str] = None
     dtale_charts_url: Optional[str] = None
     error: Optional[str] = None
+    visible: bool = True
 
     @root_validator(pre=True)
     def set_data_id_and_urls(cls, values):
@@ -306,6 +312,7 @@ def register_existing_source(
         source = DataSource(
             name=package.metadata_module.display_name,
             package_name=package.package_name,
+            package_path=package_path,
             list_paths=package.list_paths_module.main,
             get_data=package.get_data_module.main,
             visible=visible,
@@ -314,6 +321,15 @@ def register_existing_source(
         source.register()
     except BaseException:
         pass
+
+
+def get_node_by_data_id(data_id: str) -> Node:
+    """
+    Probably wouldn't need to do this if I was better organized, ah well
+    """
+    for source in SOURCES.values():
+        if data_id in source.nodes:
+            return source.nodes[data_id]
 
 
 DataSourceSerialized.update_forward_refs()

@@ -1,9 +1,16 @@
 import React, { Dispatch, useEffect } from "react";
 import { DataSource, DataNode } from "../store/state";
-import { Action, updateSource, setSelectedSource, updateNode } from "../store/actions";
+import {
+  Action,
+  updateSource,
+  setSelectedSource,
+  updateNode,
+} from "../store/actions";
 import { httpRequest } from "../utils/requests";
 import { List, Alert, Collapse, Tag, Popover, Space, Spin, Button } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
+import {
+  SettingOutlined,
+} from "@ant-design/icons";
 import {
   ViewTableButton,
   ViewChartsButton,
@@ -57,9 +64,19 @@ const LoadMoreButton: React.FC<{
     </Button>
   );
 
-const NodeDescription: React.FC<{ node: DataNode; dispatch: Dispatch<Action> }> = ({ node, dispatch }) => {
+const NodeDescription: React.FC<{
+  node: DataNode;
+  dispatch: Dispatch<Action>;
+}> = ({ node, dispatch }) => {
   if (node.error) {
-    return <Alert type="error" message={node.error} closable onClose={() => dispatch(updateNode({ ...node, error: undefined }))}/>;
+    return (
+      <Alert
+        type="error"
+        message={node.error}
+        closable
+        onClose={() => dispatch(updateNode({ ...node, error: undefined }))}
+      />
+    );
   } else if (node.dtaleUrl) {
     return (
       <a href={node.dtaleUrl} target="_blank" rel="noopener noreferrer">
@@ -71,7 +88,10 @@ const NodeDescription: React.FC<{ node: DataNode; dispatch: Dispatch<Action> }> 
   }
 };
 
-const SourceList: React.FC<SourceListProps> = ({ sources, dispatch }) => {
+const SourceList: React.FC<SourceListProps> = ({
+  sources,
+  dispatch,
+}) => {
   const loadMoreNodes = (source: DataSource) => {
     dispatch(updateSource({ ...source, loading: true }));
     httpRequest({
@@ -83,6 +103,10 @@ const SourceList: React.FC<SourceListProps> = ({ sources, dispatch }) => {
         dispatch(updateSource({ ...source, loading: false, error: error })),
     });
   };
+
+  const nodeIsVisible = (node: DataNode): boolean => node.visible;
+
+  const sourceIsVisible = (source: DataSource): boolean => source.visible;
 
   useEffect(() => {
     sources.forEach((source) => {
@@ -99,9 +123,10 @@ const SourceList: React.FC<SourceListProps> = ({ sources, dispatch }) => {
 
   return (
     <Collapse defaultActiveKey={[]}>
-      {sources.map((source) => (
+      {sources.filter(sourceIsVisible).map((source) => (
         <Collapse.Panel
           key={source.id}
+          style={source.visible ? {} : { color: "lightgray" }}
           disabled={source.loading}
           header={
             <Space>
@@ -113,32 +138,36 @@ const SourceList: React.FC<SourceListProps> = ({ sources, dispatch }) => {
             </Space>
           }
           extra={
-            <Button
-              icon={<SettingOutlined />}
-              onClick={(event) => {
-                event.stopPropagation();
-                dispatch(setSelectedSource(source));
-              }}
-            >
-              Settings
-            </Button>
+            <Space>
+              <Button
+                icon={<SettingOutlined />}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  dispatch(setSelectedSource(source));
+                }}
+              >
+                Settings
+              </Button>
+            </Space>
           }
         >
           <List
             size="small"
             bordered
-            dataSource={Object.values(source.nodes || {})}
+            dataSource={Object.values(source.nodes || {}).filter(nodeIsVisible)}
             renderItem={(node) => (
               <List.Item
                 actions={[
+                  <ShutdownButton dispatch={dispatch} node={node} />,
                   <ViewTableButton dispatch={dispatch} node={node} />,
                   <ViewChartsButton dispatch={dispatch} node={node} />,
-                  <ShutdownButton dispatch={dispatch} node={node} />,
                 ]}
               >
                 <List.Item.Meta
                   title={node.path}
-                  description={<NodeDescription node={node} dispatch={dispatch} />}
+                  description={
+                    <NodeDescription node={node} dispatch={dispatch} />
+                  }
                 />
               </List.Item>
             )}

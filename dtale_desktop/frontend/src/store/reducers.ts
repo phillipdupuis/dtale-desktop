@@ -41,6 +41,11 @@ export function reducer(state: RootState, action: Action): RootState {
           s.id === action.node.sourceId ? updateSourceNode(s, action.node) : s
         ),
       };
+    case "SET_OPEN_MODAL":
+      return {
+        ...state,
+        openModal: action.modal,
+      };
     default:
       return { ...state, sources: state.sources || [] };
   }
