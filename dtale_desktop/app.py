@@ -11,7 +11,6 @@ from dtale_desktop import default_sources
 from dtale_desktop.file_system import fs
 from dtale_desktop.models import (
     SOURCES,
-    DataSource,
     DataSourceSerialized,
     DataSourceLayoutChange,
     Node,
@@ -26,7 +25,7 @@ REACT_APP_DIR = os.path.join(
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 
-app = FastAPI()
+app = FastAPI(title="D-Tale Desktop")
 
 app.mount(
     "/static",
@@ -59,25 +58,25 @@ async def health_check():
     return Response(status_code=204)
 
 
-@app.get("/manifest.json")
+@app.get("/manifest.json", include_in_schema=False)
 async def manifest():
     with open(os.path.join(REACT_APP_DIR, "manifest.json")) as f:
         return Response(content=f.read(), media_type="application/json")
 
 
-@app.get("/favicon.ico")
+@app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     with open(os.path.join(REACT_APP_DIR, "favicon.ico"), "rb") as f:
         return Response(content=f.read(), media_type="image/x-icon")
 
 
-@app.get("/logo192.png")
+@app.get("/logo192.png", include_in_schema=False)
 async def logo192():
     with open(os.path.join(REACT_APP_DIR, "logo192.png"), "rb") as f:
         return Response(content=f.read(), media_type="image/png")
 
 
-@app.get("/logo512.png")
+@app.get("/logo512.png", include_in_schema=False)
 async def logo512():
     with open(os.path.join(REACT_APP_DIR, "logo512.png"), "rb") as f:
         return Response(content=f.read(), media_type="image/png")
@@ -98,37 +97,25 @@ async def get_source_list():
 
 
 @app.post("/source/create/", response_model=DataSourceSerialized)
-async def create(serialized: DataSourceSerialized):
+async def create_source(serialized: DataSourceSerialized):
     source = serialized.deserialize()
     return source.serialize()
 
 
 @app.post("/source/update/", response_model=DataSourceSerialized)
-async def update(serialized: DataSourceSerialized):
+async def update_source(serialized: DataSourceSerialized):
     source = serialized.deserialize(overwrite_existing=True)
     return source.serialize()
 
 
 @app.post("/source/update-layout/", response_model=List[DataSourceSerialized])
-async def update(changes: List[DataSourceLayoutChange]):
+async def update_source_layout(changes: List[DataSourceLayoutChange]):
     return [change.apply() for change in changes]
 
 
-def parse_source(serialized: DataSourceSerialized) -> DataSource:
-    """
-    Reusable as a dependency for getting a source without overwriting the server-side state.
-    """
-    return serialized.deserialize(overwrite_existing=False)
-
-
-@app.post("/source/toggle-visible/", response_model=DataSourceSerialized)
-async def toggle_visible(source: DataSource = Depends(parse_source)):
-    source.visible = not source.visible
-    return source.serialize()
-
-
 @app.post("/source/nodes/list/", response_model=DataSourceSerialized)
-async def load_nodes(source: DataSource = Depends(parse_source)):
+async def load_source_nodes(serialized: DataSourceSerialized):
+    source = serialized.deserialize()
     await source.load_nodes(limit=50)
     return source.serialize()
 
@@ -149,7 +136,7 @@ async def node_view_dtale_instance(node: Node = Depends(get_node_by_data_id)):
 
 
 @app.get("/node/kill/{data_id}/", response_model=Node)
-async def kill_data_instance(node: Node = Depends(get_node_by_data_id)):
+async def node_kill_dtale_instance(node: Node = Depends(get_node_by_data_id)):
     await node.shut_down()
     return node
 
@@ -161,7 +148,15 @@ async def node_clear_cache(node: Node = Depends(get_node_by_data_id)):
 
 
 @app.get("/node/profile-report/{data_id}/", response_class=HTMLResponse)
-async def frontend_profile_report_view(data_id: str):
+async def noad_profile_report_loading_page(data_id: str):
+    """
+    This one is a bit weird because it is being opened in a new tab.
+    We do this because building a profile report can take a LONG time, and we don't want to block the main app.
+
+    We return a static loading page which, when the window is ready, will fetch /node/build-profile-report/{data_id}/.
+    Once the report is built, the response will provide a url for viewing it.
+    The promise resolves by redirecting the user to that URL (in the newly opened tab).
+    """
     with open(os.path.join(TEMPLATES_DIR, "loading_profile_report.html")) as f:
         return f.read()
 
