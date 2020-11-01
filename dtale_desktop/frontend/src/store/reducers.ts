@@ -1,10 +1,7 @@
-import { DataNode, DataSource, RootState } from "./state";
+import { Node, Source, RootState } from "./state";
 import { Action } from "./actions";
 
-const updateSourceNode = (
-  source: DataSource,
-  updatedNode: DataNode
-): DataSource => {
+const updateSourceNode = (source: Source, updatedNode: Node): Source => {
   return {
     ...source,
     nodes: Object.fromEntries(
@@ -15,12 +12,16 @@ const updateSourceNode = (
   };
 };
 
-export function reducer(state: RootState, action: Action): RootState {
+// sortSources is needed b/c array.sort sorts in-place, so react components don't know if it changes.
+const sortedSources = (sources: Source[]): Source[] =>
+  [...sources].sort((s1: Source, s2: Source) => s1.sortValue! - s2.sortValue!);
+
+export const reducer = (state: RootState, action: Action): RootState => {
   switch (action.type) {
     case "ADD_SOURCES":
       return {
         ...state,
-        sources: [...action.sources, ...(state.sources || [])],
+        sources: sortedSources(action.sources.concat(state.sources || [])),
       };
     case "SET_SELECTED_SOURCE":
       return {
@@ -30,8 +31,10 @@ export function reducer(state: RootState, action: Action): RootState {
     case "UPDATE_SOURCE":
       return {
         ...state,
-        sources: state.sources!.map((s) =>
-          s.id === action.source.id ? action.source : s
+        sources: sortedSources(
+          state.sources!.map((s) =>
+            s.id === action.source.id ? action.source : s
+          )
         ),
       };
     case "UPDATE_NODE":
@@ -46,7 +49,12 @@ export function reducer(state: RootState, action: Action): RootState {
         ...state,
         openModal: action.modal,
       };
+    case "UPDATE_SETTINGS":
+      return {
+        ...state,
+        settings: action.settings,
+      };
     default:
       return { ...state, sources: state.sources || [] };
   }
-}
+};

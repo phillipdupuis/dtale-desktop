@@ -1,35 +1,14 @@
+import inspect
 import os
 import re
-import inspect
 import shutil
-from importlib.util import spec_from_file_location, module_from_spec
-from typing import Callable, Optional
+from importlib.util import spec_from_file_location, module_from_spec, find_spec
 from types import ModuleType
+from typing import Callable, Optional
+
 from pydantic import BaseModel
 
-
-ROOT = os.path.join(os.path.expanduser("~"), ".dtaledesktop")
-
-LOADERS_DIR = os.path.join(ROOT, "loaders")
-
-
-def create_python_file(path: str, code: str = "") -> None:
-    file = open(path, "w")
-    file.write(code)
-    file.close()
-
-
-def create_python_directory(path: str) -> None:
-    if not os.path.exists(path):
-        os.makedirs(path, exist_ok=True)
-        init_file = os.path.join(path, "__init__.py")
-        if not os.path.exists(init_file):
-            create_python_file(init_file)
-
-
-# Make sure CUSTOM_ROOT and CUSTOM_LOADERS are set up, we need em
-create_python_directory(ROOT)
-create_python_directory(LOADERS_DIR)
+from dtale_desktop.file_system import fs
 
 
 def get_source_file(func: Callable) -> str:
@@ -48,11 +27,11 @@ def load_module_from_path(path: str, *, name: str = None) -> ModuleType:
 
 def create_package_name(display_name: str) -> str:
     base_name = re.sub(r"\W+", "", display_name.replace(" ", "_"))
-    if not os.path.exists(os.path.join(LOADERS_DIR, base_name)):
+    if find_spec(base_name) is None:
         return base_name
     else:
         count = 1
-        while os.path.exists(os.path.join(LOADERS_DIR, f"{base_name}{count}")):
+        while os.path.exists(os.path.join(fs.LOADERS_DIR, f"{base_name}{count}")):
             count += 1
         return f"{base_name}{count}"
 
@@ -89,10 +68,10 @@ def create_data_source_package(
     metadata_code: str,
 ) -> DataSourcePackage:
     path = os.path.join(directory, package_name)
-    create_python_directory(path)
-    create_python_file(os.path.join(path, "list_paths.py"), list_paths_code)
-    create_python_file(os.path.join(path, "get_data.py"), get_data_code)
-    create_python_file(os.path.join(path, "metadata.py"), metadata_code)
+    fs.create_python_package(path)
+    fs.create_file(os.path.join(path, "list_paths.py"), list_paths_code)
+    fs.create_file(os.path.join(path, "get_data.py"), get_data_code)
+    fs.create_file(os.path.join(path, "metadata.py"), metadata_code)
     return load_data_source_package(path, package_name)
 
 

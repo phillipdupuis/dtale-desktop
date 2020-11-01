@@ -1,98 +1,46 @@
-import React, { Dispatch, useEffect } from "react";
-import { DataSource, DataNode } from "../store/state";
+import React, { useEffect } from "react";
+import { Source } from "../store/state";
 import {
-  Action,
   updateSource,
   setSelectedSource,
-  updateNode,
+  ActionDispatch,
 } from "../store/actions";
 import { httpRequest } from "../utils/requests";
-import { List, Alert, Collapse, Tag, Popover, Space, Spin, Button } from "antd";
-import {
-  SettingOutlined,
-} from "@ant-design/icons";
-import {
-  ViewTableButton,
-  ViewChartsButton,
-  ShutdownButton,
-} from "./DataNodeActions";
+import { Collapse, Tag, Popover, Space, Button, Typography } from "antd";
+import { SettingOutlined, ReloadOutlined } from "@ant-design/icons";
+import { NodeList } from "./NodeList";
+import styled from "styled-components";
 
-type SourceListProps = {
-  sources: DataSource[];
-  dispatch: Dispatch<Action>;
-};
+const StyledTag = styled(Tag)`
+  margin-right: 0;
+`;
 
-const NumResultsTag: React.FC<{ source: DataSource }> = ({ source }) => (
-  <Tag>
-    {source.loading ? (
-      <Spin size="small" />
-    ) : (
-      `${Object.keys(source.nodes || {}).length} results`
-    )}
-  </Tag>
-);
-
-const NumActiveTag: React.FC<{ source: DataSource }> = ({ source }) => {
-  const numActive: number = Object.values(source.nodes || {}).filter(
-    (node) => node.dtaleUrl
-  ).length;
-  return numActive === 0 ? null : (
-    <Tag color="green">{`${numActive} active`}</Tag>
+const SourceDescription: React.FC<{ source: Source }> = ({ source }) => {
+  const nodes = Object.values(source.nodes || {});
+  const numActive = nodes.filter((node) => node.dtaleUrl).length;
+  return (
+    <Space size="small">
+      <Typography.Text ellipsis>{source.name}</Typography.Text>
+      {source.loading ? null : (
+        <StyledTag>{`${nodes.length} results`}</StyledTag>
+      )}
+      {source.loading || numActive === 0 ? null : (
+        <StyledTag color="green">{`${numActive} active`}</StyledTag>
+      )}
+      {source.loading || !source.error ? null : (
+        <Tag color="error">
+          <Popover content={source.error}>Error</Popover>
+        </Tag>
+      )}
+    </Space>
   );
 };
 
-const ErrorTag: React.FC<{ source: DataSource }> = ({ source }) =>
-  source.error ? (
-    <Tag color="error">
-      <Popover content={source.error}>Error</Popover>
-    </Tag>
-  ) : null;
-
-const LoadMoreButton: React.FC<{
-  source: DataSource;
-  loadMore: (source: DataSource) => void;
-}> = ({ source, loadMore }) =>
-  source.nodesFullyLoaded || source.loading || source.error ? null : (
-    <Button
-      size="small"
-      onClick={(event) => {
-        event.stopPropagation();
-        loadMore(source);
-      }}
-    >
-      Load more
-    </Button>
-  );
-
-const NodeDescription: React.FC<{
-  node: DataNode;
-  dispatch: Dispatch<Action>;
-}> = ({ node, dispatch }) => {
-  if (node.error) {
-    return (
-      <Alert
-        type="error"
-        message={node.error}
-        closable
-        onClose={() => dispatch(updateNode({ ...node, error: undefined }))}
-      />
-    );
-  } else if (node.dtaleUrl) {
-    return (
-      <a href={node.dtaleUrl} target="_blank" rel="noopener noreferrer">
-        {node.dtaleUrl}
-      </a>
-    );
-  } else {
-    return null;
-  }
-};
-
-const SourceList: React.FC<SourceListProps> = ({
-  sources,
-  dispatch,
-}) => {
-  const loadMoreNodes = (source: DataSource) => {
+export const SourceList: React.FC<{
+  sources: Source[];
+  dispatch: ActionDispatch;
+}> = ({ sources, dispatch }) => {
+  const loadMoreNodes = (source: Source) => {
     dispatch(updateSource({ ...source, loading: true }));
     httpRequest({
       method: "POST",
@@ -103,10 +51,6 @@ const SourceList: React.FC<SourceListProps> = ({
         dispatch(updateSource({ ...source, loading: false, error: error })),
     });
   };
-
-  const nodeIsVisible = (node: DataNode): boolean => node.visible;
-
-  const sourceIsVisible = (source: DataSource): boolean => source.visible;
 
   useEffect(() => {
     sources.forEach((source) => {
@@ -123,59 +67,47 @@ const SourceList: React.FC<SourceListProps> = ({
 
   return (
     <Collapse defaultActiveKey={[]}>
-      {sources.filter(sourceIsVisible).map((source) => (
-        <Collapse.Panel
-          key={source.id}
-          style={source.visible ? {} : { color: "lightgray" }}
-          disabled={source.loading}
-          header={
-            <Space>
-              <span>{source.name}</span>
-              <NumResultsTag source={source} />
-              <NumActiveTag source={source} />
-              <ErrorTag source={source} />
-              <LoadMoreButton source={source} loadMore={loadMoreNodes} />
-            </Space>
-          }
-          extra={
-            <Space>
-              <Button
-                icon={<SettingOutlined />}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  dispatch(setSelectedSource(source));
-                }}
-              >
-                Settings
-              </Button>
-            </Space>
-          }
-        >
-          <List
-            size="small"
-            bordered
-            dataSource={Object.values(source.nodes || {}).filter(nodeIsVisible)}
-            renderItem={(node) => (
-              <List.Item
-                actions={[
-                  <ShutdownButton dispatch={dispatch} node={node} />,
-                  <ViewTableButton dispatch={dispatch} node={node} />,
-                  <ViewChartsButton dispatch={dispatch} node={node} />,
-                ]}
-              >
-                <List.Item.Meta
-                  title={node.path}
-                  description={
-                    <NodeDescription node={node} dispatch={dispatch} />
-                  }
-                />
-              </List.Item>
-            )}
-          />
-        </Collapse.Panel>
-      ))}
+      {sources
+        .filter((source) => source.visible)
+        .map((source) => (
+          <Collapse.Panel
+            id={source.id}
+            key={source.id}
+            disabled={source.loading}
+            header={<SourceDescription source={source} />}
+            extra={
+              <Space>
+                {source.nodesFullyLoaded || source.error ? null : (
+                  <Button
+                    size="small"
+                    icon={<ReloadOutlined />}
+                    loading={source.loading}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      loadMoreNodes(source);
+                    }}
+                  >
+                    Load more
+                  </Button>
+                )}
+                <Button
+                  icon={<SettingOutlined />}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    dispatch(setSelectedSource(source));
+                  }}
+                >
+                  Settings
+                </Button>
+              </Space>
+            }
+          >
+            <NodeList
+              nodes={Object.values(source.nodes || {})}
+              dispatch={dispatch}
+            />
+          </Collapse.Panel>
+        ))}
     </Collapse>
   );
 };
-
-export default SourceList;

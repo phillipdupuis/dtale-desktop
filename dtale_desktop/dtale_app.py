@@ -2,9 +2,9 @@ import _thread
 from typing import Union
 from urllib.parse import urljoin
 
-import requests
 import dtale
 import pandas as pd
+import requests
 from dtale import utils as _utils
 from dtale import views as _views
 
@@ -16,7 +16,7 @@ DTALE_PORT = dtale.app.ACTIVE_PORT
 
 DTALE_URL = _utils.build_url(DTALE_PORT, DTALE_HOST)
 
-app = dtale.app.build_app(DTALE_URL, host=DTALE_HOST)
+app = dtale.app.build_app(DTALE_URL, host=DTALE_HOST, reaper_on=False)
 
 
 def _start_server():
@@ -44,6 +44,14 @@ def launch_instance(
 
 def get_charts_url(data_id: Union[str, int]) -> str:
     return urljoin(DTALE_URL, f"/charts/{data_id}")
+
+
+def get_describe_url(data_id: Union[str, int]) -> str:
+    return urljoin(DTALE_URL, f"/dtale/popup/describe/{data_id}")
+
+
+def get_correlations_url(data_id: Union[str, int]) -> str:
+    return urljoin(DTALE_URL, f"/dtale/popup/correlations/{data_id}")
 
 
 def kill_instance(data_id: Union[str, int]) -> None:

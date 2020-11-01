@@ -1,28 +1,29 @@
-import React, { useState, Dispatch } from "react";
+import React, { useState } from "react";
+import styled from "styled-components";
 import { Drawer, Button, Input, Alert, notification } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
 import { httpRequest } from "../utils/requests";
-import { addSources, updateSource, setSelectedSource } from "../store/actions";
-import { DataSource } from "../store/state";
+import {
+  ActionDispatch,
+  addSources,
+  updateSource,
+  setSelectedSource,
+} from "../store/actions";
+import { Source } from "../store/state";
 import { PythonEditor } from "./PythonEditor";
 
-type Props = {
-  source: DataSource;
-  dispatch: Dispatch<any>;
-};
+const Label = styled.div`
+  margin-top: 5;
+  margin-bottom: 5;
+`;
 
-const Label: React.FC<{ text: string }> = ({ text }) => (
-  <div style={{ marginTop: 5, marginBottom: 5 }}>{text}</div>
-);
-
-const Editor: React.FC<Props> = ({ source, dispatch }) => {
+const Editor: React.FC<{
+  source: Source;
+  clone: Source;
+  mode: "edit" | "new";
+  dispatch: ActionDispatch;
+}> = ({ source, clone, mode, dispatch }) => {
   const [error, setError] = useState<string | null>(null);
-
-  // Determine if new source or existing
-  const mode: "edit" | "new" = source.name !== "" ? "edit" : "new";
-
-  // Make a copy of the source object and edit that.
-  const clone: DataSource = { ...source };
 
   const checkRequired = (): boolean => {
     const requiredFields = ["name", "listPaths", "getData"] as const;
@@ -48,7 +49,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
         method: "POST",
         url: "/source/create/",
         body: updatedSource,
-        resolve: (data: DataSource) => {
+        resolve: (data: Source) => {
           dispatch(addSources([data]));
           dispatch(setSelectedSource(null));
         },
@@ -64,7 +65,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
         method: "POST",
         url: "/source/update/",
         body: updatedSource,
-        resolve: (data: DataSource) => {
+        resolve: (data: Source) => {
           dispatch(updateSource(data));
           dispatch(setSelectedSource(null));
         },
@@ -75,7 +76,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
 
   return (
     <Drawer
-      title={mode === "new" ? "Add Data Source" : "Edit Data Source"}
+      title={mode === "new" ? "Add Data Source" : "Data Source"}
       width={800}
       onClose={() => dispatch(setSelectedSource(null))}
       visible={true}
@@ -119,7 +120,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
         }}
         size="small"
       />
-      <Label text="list_paths.py" />
+      <Label>list_paths.py</Label>
       <PythonEditor
         readOnly={!source.editable}
         name="list_paths_code"
@@ -131,7 +132,7 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
         maxLines={16}
         minLines={16}
       />
-      <Label text="get_data.py" />
+      <Label>get_data.py</Label>
       <PythonEditor
         readOnly={!source.editable}
         name="get_data_code"
@@ -163,4 +164,15 @@ const Editor: React.FC<Props> = ({ source, dispatch }) => {
   );
 };
 
-export default Editor;
+// Wrapping the main component to fix some bugs from when errors occur, should probably clean this up.
+export const SourceConfigEditor: React.FC<{
+  source: Source;
+  dispatch: ActionDispatch;
+}> = ({ source, dispatch }) => (
+  <Editor
+    source={source}
+    clone={{ ...source }}
+    mode={source.name !== "" ? "edit" : "new"}
+    dispatch={dispatch}
+  />
+);

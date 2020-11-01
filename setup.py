@@ -22,11 +22,13 @@ install_requires = [
     "fastapi",
     "uvicorn",
     "aiofiles",
+    "typing_extensions",
+    "psutil",
 ]
 
 setup(
     name="dtaledesktop",
-    version="0.0.3",
+    version="0.0.4",
     description="Manage your D-Tale instances",
     license="MIT",
     long_description=readme(),
@@ -47,7 +49,8 @@ setup(
     entry_points={
         "console_scripts": [
             "dtaledesktop = dtale_desktop.app:run",
-            "dtaledesktop_open_browser = dtale_desktop.open_browser:main",
+            "dtaledesktop_open_browser = dtale_desktop.subprocesses:open_browser",
+            "dtaledesktop_profile_report = dtale_desktop.subprocesses:build_profile_report",
         ]
     },
     classifiers=classifiers,

@@ -1,0 +1,68 @@
+import asyncio
+import sys
+from argparse import ArgumentParser
+
+import psutil
+
+
+def open_browser():
+    import requests
+    import time
+    import webbrowser
+
+    parser = ArgumentParser()
+    parser.add_argument("url", type=str)
+
+    target_url = parser.parse_args().url
+    health_check_url = f"{target_url}/health/"
+
+    with requests.session() as session:
+        attempts = 0
+        while True:
+            if session.get(health_check_url).status_code == 204:
+                webbrowser.open(target_url)
+                sys.exit(0)
+            elif attempts == 60:
+                sys.exit("Dtale Desktop did not seem to launch; shutting down.")
+            else:
+                attempts += 1
+                time.sleep(1)
+
+
+def build_profile_report():
+    import pandas as pd
+    from pandas_profiling import ProfileReport
+
+    parser = ArgumentParser()
+    parser.add_argument("data_path", type=str)
+    parser.add_argument("output_path", type=str)
+    parser.add_argument("title", type=str)
+    args = parser.parse_args()
+
+    data = pd.read_pickle(args.data_path)
+    report = ProfileReport(data, title=args.title)
+    report.to_file(args.output_path)
+    sys.exit(0)
+
+
+def launch_browser_opener(url: str) -> None:
+    psutil.Popen(["dtaledesktop_open_browser", url])
+
+
+async def execute_profile_report_builder(
+    data_path: str, output_path: str, title: str
+) -> None:
+    args = ["dtaledesktop_profile_report", data_path, output_path, title]
+
+    for p in psutil.Process().children(recursive=True):
+        try:
+            if p.cmdline() == args:
+                builder = p
+                break
+        except psutil.ZombieProcess:
+            continue
+    else:
+        builder = psutil.Popen(args)
+
+    while builder.is_running():
+        await asyncio.sleep(1)

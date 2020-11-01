@@ -1,47 +1,30 @@
 import os
-import subprocess
-import socket
+import asyncio
 from typing import List
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from dtale_desktop import default_sources
+from dtale_desktop.file_system import fs
 from dtale_desktop.models import (
     SOURCES,
+    DataSource,
     DataSourceSerialized,
+    DataSourceLayoutChange,
     Node,
     register_existing_source,
-    LOADERS_DIR,
-    get_node_by_data_id,
 )
-from dtale_desktop.pydantic_utils import BaseApiModel
-
-
-def _get_host() -> str:
-    try:
-        return socket.gethostbyname("localhost")
-    except BaseException:
-        return socket.gethostbyname(socket.gethostname())
-
-
-def _get_port() -> int:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("", 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    return port
-
-
-HOST = _get_host()
-
-PORT = _get_port()
+from dtale_desktop.settings import settings
+from dtale_desktop.subprocesses import launch_browser_opener
 
 REACT_APP_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "frontend", "build"
 )
+
+TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 
 app = FastAPI()
 
@@ -60,8 +43,9 @@ def register_any_existing_sources() -> None:
     for pkg in [default_sources.csv, default_sources.excel, default_sources.json]:
         register_existing_source(pkg.__path__[0], editable=False)
 
-    for path in (os.path.join(LOADERS_DIR, p) for p in os.listdir(LOADERS_DIR)):
-        register_existing_source(path)
+    for loaders_dir in [fs.LOADERS_DIR, *fs.ADDITIONAL_LOADERS_DIRS]:
+        for path in (os.path.join(loaders_dir, p) for p in os.listdir(loaders_dir)):
+            register_existing_source(path)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -99,6 +83,15 @@ async def logo512():
         return Response(content=f.read(), media_type="image/png")
 
 
+@app.get("/settings/")
+async def get_settings():
+    return {
+        "disableAddDataSources": settings.DISABLE_ADD_DATA_SOURCES,
+        "disableEditDataSources": settings.DISABLE_EDIT_DATA_SOURCES,
+        "disableEditLayout": settings.DISABLE_EDIT_LAYOUT,
+    }
+
+
 @app.get("/source/list/", response_model=List[DataSourceSerialized])
 async def get_source_list():
     return [source.serialize() for source in SOURCES.values()]
@@ -116,62 +109,95 @@ async def update(serialized: DataSourceSerialized):
     return source.serialize()
 
 
+@app.post("/source/update-layout/", response_model=List[DataSourceSerialized])
+async def update(changes: List[DataSourceLayoutChange]):
+    return [change.apply() for change in changes]
+
+
+def parse_source(serialized: DataSourceSerialized) -> DataSource:
+    """
+    Reusable as a dependency for getting a source without overwriting the server-side state.
+    """
+    return serialized.deserialize(overwrite_existing=False)
+
+
 @app.post("/source/toggle-visible/", response_model=DataSourceSerialized)
-async def toggle_visible(serialized: DataSourceSerialized):
-    source = serialized.deserialize()
+async def toggle_visible(source: DataSource = Depends(parse_source)):
     source.visible = not source.visible
     return source.serialize()
 
 
 @app.post("/source/nodes/list/", response_model=DataSourceSerialized)
-async def load_nodes(serialized: DataSourceSerialized):
-    source = serialized.deserialize()
+async def load_nodes(source: DataSource = Depends(parse_source)):
     await source.load_nodes(limit=50)
     return source.serialize()
 
 
-@app.post("/node/view/", response_model=Node)
-async def view_data_instance(node: Node):
-    source = SOURCES[node.source_id]
-    await source.launch_node(node.data_id)
-    return source.get_node(node.data_id)
+def get_node_by_data_id(data_id: str) -> Node:
+    """
+    Reusable as dependency for taking a data_id path parameter and returning the Node instance.
+    """
+    for source in SOURCES.values():
+        if data_id in source.nodes:
+            return source.nodes[data_id]
 
 
-@app.post("/node/kill/", response_model=Node)
-async def kill_data_instance(node: Node):
-    source = SOURCES[node.source_id]
-    source.kill_node(node.data_id)
-    return source.get_node(node.data_id)
+@app.get("/node/view/{data_id}/", response_model=Node)
+async def node_view_dtale_instance(node: Node = Depends(get_node_by_data_id)):
+    await node.launch_dtale()
+    return node
 
 
-class VisibilityChanges(BaseApiModel):
-    show_sources: List[str]
-    hide_sources: List[str]
-    show_nodes: List[str]
-    hide_nodes: List[str]
+@app.get("/node/kill/{data_id}/", response_model=Node)
+async def kill_data_instance(node: Node = Depends(get_node_by_data_id)):
+    await node.shut_down()
+    return node
 
 
-@app.post("/update-filters/", response_model=List[DataSourceSerialized])
-async def update_filters(changes: VisibilityChanges):
-    updated_source_ids = set(changes.show_sources + changes.hide_sources)
-    for source_id in changes.show_sources:
-        SOURCES[source_id].visible = True
-    for source_id in changes.hide_sources:
-        SOURCES[source_id].visible = False
-    for data_id in changes.show_nodes:
-        node = get_node_by_data_id(data_id)
-        node.visible = True
-        updated_source_ids.add(node.source_id)
-    for data_id in changes.hide_nodes:
-        node = get_node_by_data_id(data_id)
-        node.visible = False
-        updated_source_ids.add(node.source_id)
-    return [SOURCES[source_id].serialize() for source_id in updated_source_ids]
+@app.get("/node/clear-cache/{data_id}/", response_model=Node)
+async def node_clear_cache(node: Node = Depends(get_node_by_data_id)):
+    await node.clear_cache()
+    return node
+
+
+@app.get("/node/profile-report/{data_id}/", response_class=HTMLResponse)
+async def frontend_profile_report_view(data_id: str):
+    with open(os.path.join(TEMPLATES_DIR, "loading_profile_report.html")) as f:
+        return f.read()
+
+
+@app.get("/node/build-profile-report/{data_id}/")
+async def node_build_profile_report(node: Node = Depends(get_node_by_data_id)):
+    await node.build_profile_report()
+    return {
+        "ok": True,
+        "url": f"http://{settings.HOST}:{settings.PORT}/node/view-profile-report/{node.data_id}/",
+    }
+
+
+@app.get("/node/watch-profile-report-builder/{data_id}/")
+async def node_watch_profile_report_builder(data_id: str):
+    """
+    Allows the front-end to update the display information once a profile report builds successfully.
+    Necessary because the profile report entails opening a separate tab.
+    """
+    time_waited = 0
+    while time_waited < 600:
+        if fs.profile_report_exists(data_id):
+            return {"ok": True, "node": get_node_by_data_id(data_id)}
+        await asyncio.sleep(5)
+        time_waited += 5
+    return {"ok": False}
+
+
+@app.get("/node/view-profile-report/{data_id}/", response_class=HTMLResponse)
+async def node_view_profile_report(data_id: str):
+    return fs.read_profile_report(data_id)
 
 
 def run():
-    subprocess.Popen(["dtaledesktop_open_browser", f"http://{HOST}:{PORT}"])
-    uvicorn.run(app, host=HOST, port=PORT, debug=True)
+    launch_browser_opener(f"http://{settings.HOST}:{settings.PORT}")
+    uvicorn.run(app, host=settings.HOST, port=settings.PORT, debug=True)
 
 
 if __name__ == "__main__":
