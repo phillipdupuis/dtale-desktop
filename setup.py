@@ -44,6 +44,7 @@ setup(
             "frontend/build/*",
             "frontend/build/static/css/*",
             "frontend/build/static/js/*",
+            "templates/*",
         ]
     },
     entry_points={

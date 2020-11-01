@@ -40,7 +40,11 @@ class _Settings:
         self._instance = self
 
         self._HOST = os.getenv("DTALEDESKTOP_HOST", None)
-        self._PORT = int(os.getenv("DTALEDESKTOP_PORT", None))
+        try:
+            self._PORT = int(os.getenv("DTALEDESKTOP_PORT"))
+        except (ValueError, TypeError):
+            self._PORT = None
+
         self.ROOT_DIR = os.getenv(
             "DTALEDESKTOP_ROOT_DIR",
             os.path.join(os.path.expanduser("~"), ".dtaledesktop"),
