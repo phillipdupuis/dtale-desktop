@@ -1,3 +1,7 @@
+type StatefulResourceProps = {
+  updating?: boolean;
+};
+
 export type Node = {
   sourceId: string;
   path: string;
@@ -10,7 +14,7 @@ export type Node = {
   lastCachedAt?: number;
   error?: string;
   sortValue?: number;
-};
+} & StatefulResourceProps;
 
 export type Source = {
   id: string;
@@ -26,13 +30,13 @@ export type Source = {
   listPaths: string;
   getData: string;
   saveData: string;
-  loading?: boolean;
-};
+} & StatefulResourceProps;
 
 export type Settings = {
   disableAddDataSources: boolean;
   disableEditDataSources: boolean;
   disableEditLayout: boolean;
+  disableProfileReports: boolean;
 };
 
 export interface RootState {
@@ -41,7 +45,7 @@ export interface RootState {
   openModal: null | "layoutEditor";
   settings?: Settings;
   error: null | string;
-};
+}
 
 export const initialState: RootState = {
   sources: undefined,

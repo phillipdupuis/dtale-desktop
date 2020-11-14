@@ -1,10 +1,11 @@
-import os
 import asyncio
-from typing import List
+import os
+from typing import List, Optional
 
 import uvicorn
 from fastapi import FastAPI, Depends
-from fastapi.responses import HTMLResponse, Response
+from fastapi.exceptions import HTTPException
+from fastapi.responses import HTMLResponse, Response, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from dtale_desktop import default_sources
@@ -82,13 +83,9 @@ async def logo512():
         return Response(content=f.read(), media_type="image/png")
 
 
-@app.get("/settings/")
+@app.get("/settings/", response_model=settings.Serialized)
 async def get_settings():
-    return {
-        "disableAddDataSources": settings.DISABLE_ADD_DATA_SOURCES,
-        "disableEditDataSources": settings.DISABLE_EDIT_DATA_SOURCES,
-        "disableEditLayout": settings.DISABLE_EDIT_LAYOUT,
-    }
+    return settings.serialize()
 
 
 @app.get("/source/list/", response_model=List[DataSourceSerialized])
@@ -113,10 +110,10 @@ async def update_source_layout(changes: List[DataSourceLayoutChange]):
     return [change.apply() for change in changes]
 
 
-@app.post("/source/nodes/list/", response_model=DataSourceSerialized)
-async def load_source_nodes(serialized: DataSourceSerialized):
-    source = serialized.deserialize()
-    await source.load_nodes(limit=50)
+@app.get("/source/{source_id}/load-nodes/", response_model=DataSourceSerialized)
+async def get_source_nodes(source_id: str, limit: Optional[int] = None):
+    source = SOURCES[source_id]
+    await source.load_nodes(limit=limit)
     return source.serialize()
 
 
@@ -137,7 +134,7 @@ async def node_view_dtale_instance(node: Node = Depends(get_node_by_data_id)):
 
 @app.get("/node/kill/{data_id}/", response_model=Node)
 async def node_kill_dtale_instance(node: Node = Depends(get_node_by_data_id)):
-    await node.shut_down()
+    node.shut_down()
     return node
 
 
@@ -145,6 +142,11 @@ async def node_kill_dtale_instance(node: Node = Depends(get_node_by_data_id)):
 async def node_clear_cache(node: Node = Depends(get_node_by_data_id)):
     await node.clear_cache()
     return node
+
+
+def assert_profile_reports_enabled() -> None:
+    if settings.DISABLE_PROFILE_REPORTS:
+        raise HTTPException(status_code=400, detail="Profile reports are not enabled")
 
 
 @app.get("/node/profile-report/{data_id}/", response_class=HTMLResponse)
@@ -155,19 +157,20 @@ async def noad_profile_report_loading_page(data_id: str):
 
     We return a static loading page which, when the window is ready, will fetch /node/build-profile-report/{data_id}/.
     Once the report is built, the response will provide a url for viewing it.
-    The promise resolves by redirecting the user to that URL (in the newly opened tab).
+    The promise resolves by redirecting the user to that URL.
     """
+    assert_profile_reports_enabled()
     with open(os.path.join(TEMPLATES_DIR, "loading_profile_report.html")) as f:
         return f.read()
 
 
-@app.get("/node/build-profile-report/{data_id}/")
+@app.get("/node/build-profile-report/{data_id}/", response_class=RedirectResponse)
 async def node_build_profile_report(node: Node = Depends(get_node_by_data_id)):
+    assert_profile_reports_enabled()
     await node.build_profile_report()
-    return {
-        "ok": True,
-        "url": f"http://{settings.HOST}:{settings.PORT}/node/view-profile-report/{node.data_id}/",
-    }
+    return RedirectResponse(
+        url=f"http://{settings.HOST}:{settings.PORT}/node/view-profile-report/{node.data_id}/"
+    )
 
 
 @app.get("/node/watch-profile-report-builder/{data_id}/")
@@ -176,6 +179,7 @@ async def node_watch_profile_report_builder(data_id: str):
     Allows the front-end to update the display information once a profile report builds successfully.
     Necessary because the profile report entails opening a separate tab.
     """
+    assert_profile_reports_enabled()
     time_waited = 0
     while time_waited < 600:
         if fs.profile_report_exists(data_id):
@@ -187,12 +191,22 @@ async def node_watch_profile_report_builder(data_id: str):
 
 @app.get("/node/view-profile-report/{data_id}/", response_class=HTMLResponse)
 async def node_view_profile_report(data_id: str):
+    assert_profile_reports_enabled()
     return fs.read_profile_report(data_id)
 
 
 def run():
-    launch_browser_opener(f"http://{settings.HOST}:{settings.PORT}")
-    uvicorn.run(app, host=settings.HOST, port=settings.PORT, debug=True)
+    import socket
+    from dtale_desktop import dtale_app
+
+    if not settings.DISABLE_OPEN_BROWSER:
+        launch_browser_opener(f"http://{settings.HOST}:{settings.PORT}")
+
+    dtale_app.run()
+
+    uvicorn.run(
+        app, host=socket.gethostbyname(settings.HOST), port=settings.PORT, debug=True
+    )
 
 
 if __name__ == "__main__":

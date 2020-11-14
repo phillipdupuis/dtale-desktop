@@ -109,12 +109,14 @@
     </div>
     <script type="text/javascript">
       const dataId = window.location.pathname.split("/")[3];
-      document.onreadystatechange = () => {
-        fetch(`/node/build-profile-report/${dataId}/`)
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.ok) {
-              window.location.replace(data.url);
+      window.onload = () => {
+        fetch(`/node/build-profile-report/${dataId}/`, {
+          method: "GET",
+          redirect: "follow",
+        })
+          .then((response) => {
+            if (response.redirected) {
+              window.location.href = response.url;
             } else {
               throw new Error("Something went wrong");
             }

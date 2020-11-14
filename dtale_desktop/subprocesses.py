@@ -17,16 +17,23 @@ def open_browser():
     health_check_url = f"{target_url}/health/"
 
     with requests.session() as session:
+        running = False
         attempts = 0
         while True:
-            if session.get(health_check_url).status_code == 204:
+            try:
+                if session.get(health_check_url).status_code == 204:
+                    running = True
+            except:
+                pass
+
+            if running:
                 webbrowser.open(target_url)
                 sys.exit(0)
             elif attempts == 60:
                 sys.exit("Dtale Desktop did not seem to launch; shutting down.")
             else:
                 attempts += 1
-                time.sleep(1)
+                time.sleep(3)
 
 
 def build_profile_report():

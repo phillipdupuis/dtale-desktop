@@ -15,6 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
 ]
 
 install_requires = [
@@ -22,13 +23,15 @@ install_requires = [
     "fastapi",
     "uvicorn",
     "aiofiles",
+    "aiohttp",
     "typing_extensions",
     "psutil",
+    "pandas-profiling",
 ]
 
 setup(
     name="dtaledesktop",
-    version="0.0.4",
+    version="0.0.8",
     description="Manage your D-Tale instances",
     license="MIT",
     long_description=readme(),

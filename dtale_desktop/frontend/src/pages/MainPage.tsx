@@ -94,7 +94,11 @@ export const MainPage: React.FC<{
           }
         />
         {appIsLoaded ? (
-          <SourceList sources={state.sources!} dispatch={dispatch} />
+          <SourceList
+            settings={state.settings!}
+            sources={state.sources!}
+            dispatch={dispatch}
+          />
         ) : (
           <Spin />
         )}

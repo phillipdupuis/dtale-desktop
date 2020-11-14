@@ -2,7 +2,7 @@ interface SharedParams {
   url: string;
   resolve: (data: any) => any;
   reject: (error: string) => any;
-  params?: { [k: string]: string };
+  params?: { [k: string]: any };
   onStart?: () => any;
   onFinish?: () => any;
 }

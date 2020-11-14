@@ -1,15 +1,11 @@
 import React, { useEffect } from "react";
-import { Source } from "../store/state";
-import {
-  updateSource,
-  setSelectedSource,
-  ActionDispatch,
-} from "../store/actions";
-import { httpRequest } from "../utils/requests";
+import { Source, Settings } from "../store/state";
+import { setSelectedSource, ActionDispatch } from "../store/actions";
 import { Collapse, Tag, Popover, Space, Button, Typography } from "antd";
 import { SettingOutlined, ReloadOutlined } from "@ant-design/icons";
 import { NodeList } from "./NodeList";
 import styled from "styled-components";
+import { backend } from "../utils/interface";
 
 const StyledTag = styled(Tag)`
   margin-right: 0;
@@ -21,13 +17,13 @@ const SourceDescription: React.FC<{ source: Source }> = ({ source }) => {
   return (
     <Space size="small">
       <Typography.Text ellipsis>{source.name}</Typography.Text>
-      {source.loading ? null : (
+      {source.updating ? null : (
         <StyledTag>{`${nodes.length} results`}</StyledTag>
       )}
-      {source.loading || numActive === 0 ? null : (
+      {source.updating || numActive === 0 ? null : (
         <StyledTag color="green">{`${numActive} active`}</StyledTag>
       )}
-      {source.loading || !source.error ? null : (
+      {source.updating || !source.error ? null : (
         <Tag color="error">
           <Popover content={source.error}>Error</Popover>
         </Tag>
@@ -38,24 +34,17 @@ const SourceDescription: React.FC<{ source: Source }> = ({ source }) => {
 
 export const SourceList: React.FC<{
   sources: Source[];
+  settings: Settings;
   dispatch: ActionDispatch;
-}> = ({ sources, dispatch }) => {
+}> = ({ sources, settings, dispatch }) => {
   const loadMoreNodes = (source: Source) => {
-    dispatch(updateSource({ ...source, loading: true }));
-    httpRequest({
-      method: "POST",
-      url: "/source/nodes/list/",
-      body: source,
-      resolve: (data) => dispatch(updateSource({ ...data, loading: false })),
-      reject: (error) =>
-        dispatch(updateSource({ ...source, loading: false, error: error })),
-    });
+    backend.get.sourceNodes({ dispatch, sourceId: source.id, limit: 50 });
   };
 
   useEffect(() => {
     sources.forEach((source) => {
       if (
-        !source.loading &&
+        !source.updating &&
         !source.nodesFullyLoaded &&
         !source.error &&
         Object.keys(source.nodes || {}).length === 0
@@ -66,14 +55,14 @@ export const SourceList: React.FC<{
   });
 
   return (
-    <Collapse defaultActiveKey={[]}>
+    <Collapse defaultActiveKey={[]} accordion>
       {sources
         .filter((source) => source.visible)
         .map((source) => (
           <Collapse.Panel
             id={source.id}
             key={source.id}
-            disabled={source.loading}
+            disabled={source.updating}
             header={<SourceDescription source={source} />}
             extra={
               <Space>
@@ -81,7 +70,7 @@ export const SourceList: React.FC<{
                   <Button
                     size="small"
                     icon={<ReloadOutlined />}
-                    loading={source.loading}
+                    loading={source.updating}
                     onClick={(event) => {
                       event.stopPropagation();
                       loadMoreNodes(source);
@@ -103,6 +92,7 @@ export const SourceList: React.FC<{
             }
           >
             <NodeList
+              settings={settings}
               nodes={Object.values(source.nodes || {})}
               dispatch={dispatch}
             />

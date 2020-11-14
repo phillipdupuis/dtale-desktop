@@ -3,8 +3,8 @@ import { cloneDeep } from "lodash";
 import { Modal, Switch } from "antd";
 import styled from "styled-components";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { httpRequest } from "../utils/requests";
-import { updateSource, setOpenModal, ActionDispatch } from "../store/actions";
+import { setOpenModal, ActionDispatch } from "../store/actions";
+import { backend } from "../utils/interface";
 import { Source, RootState } from "../store/state";
 
 type LayoutChange = Pick<Source, "id" | "visible" | "sortValue">;
@@ -30,6 +30,9 @@ const StyledListItem = styled.div`
   width: 100%;
   height: 100%;
   cursor: pointer;
+  &:hover {
+    background-color: #d3ecfa;
+  }
   .visibility-toggle {
     margin-left: auto;
   }
@@ -74,16 +77,7 @@ const Editor: React.FC<{
         sortValue: after.sortValue,
       }));
     if (changes.length > 0) {
-      httpRequest({
-        method: "POST",
-        url: "/source/update-layout/",
-        body: changes,
-        resolve: (data) => {
-          data.forEach((s: Source) => dispatch(updateSource(s)));
-          dispatch(setOpenModal(null));
-        },
-        reject: (error) => null,
-      });
+      backend.post.sourceListLayoutChanges({ dispatch, body: changes });
     }
   };
 

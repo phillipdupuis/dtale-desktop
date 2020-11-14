@@ -205,7 +205,7 @@ class DataSourceSerialized(BaseApiModel):
     sort_value: Optional[int] = None
     list_paths: str
     get_data: str
-    save_data: str
+    save_data: str = ""
 
     @root_validator(pre=True)
     def validate_package_name(cls, values: dict) -> dict:
@@ -372,7 +372,7 @@ class Node(BaseApiModel):
             if instance is None:
                 data = await self.get_data()
                 instance = dtale_app.launch_instance(data=data, data_id=self.data_id)
-                self.dtale_url = instance.main_url()
+                self.dtale_url = dtale_app.get_main_url(self.data_id)
                 self.dtale_charts_url = dtale_app.get_charts_url(self.data_id)
                 self.dtale_describe_url = dtale_app.get_describe_url(self.data_id)
                 self.dtale_correlations_url = dtale_app.get_correlations_url(
@@ -384,9 +384,8 @@ class Node(BaseApiModel):
             return instance
         except BaseException as e:
             self.error = str(e)
-            raise HTTPException(status_code=500, detail=str(e))
 
-    async def shut_down(self):
+    def shut_down(self):
         """
         Shut down the running dtale instance
         """
@@ -397,7 +396,6 @@ class Node(BaseApiModel):
             self.dtale_describe_url = None
             self.dtale_correlations_url = None
         except BaseException as e:
-            self.error = str(e)
             raise HTTPException(status_code=500, detail=str(e))
 
     async def build_profile_report(self) -> None:

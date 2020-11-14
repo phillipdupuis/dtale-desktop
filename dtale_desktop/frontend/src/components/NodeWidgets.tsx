@@ -1,9 +1,9 @@
-import React, { Fragment, useState, ReactNode } from "react";
+import React, { Fragment, useState, ReactNode, useEffect } from "react";
 import styled from "styled-components";
-import { Node } from "../store/state";
-import { ActionDispatch, updateNode } from "../store/actions";
+import { Node, Settings } from "../store/state";
+import { ActionDispatch } from "../store/actions";
 import { Button, Typography } from "antd";
-import { httpRequest, openNewTab } from "../utils/requests";
+import { backend } from "../utils/interface";
 import {
   LineChartOutlined,
   TableOutlined,
@@ -12,114 +12,68 @@ import {
   ProfileOutlined,
 } from "@ant-design/icons";
 
-const DtaleButton: React.FC<{
+type BaseButtonProps = {
   dispatch: ActionDispatch;
-  node: Node;
-  page: "table" | "charts" | "describe" | "correlations";
-  urlProp:
-    | "dtaleUrl"
-    | "dtaleChartsUrl"
-    | "dtaleDescribeUrl"
-    | "dtaleCorrelationsUrl";
-  icon: ReactNode;
-}> = ({ dispatch, node, page, urlProp, icon }) => {
+  dataId: Node["dataId"];
+  updating: Node["updating"];
+};
+
+const DtaleButton: React.FC<
+  BaseButtonProps & {
+    page: "table" | "charts" | "describe" | "correlations";
+    icon: ReactNode;
+  }
+> = ({ dispatch, dataId, updating, page, icon }) => {
   const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (loading && !updating) {
+      setLoading(false);
+    }
+  }, [updating]);
+
   return (
     <Button
       icon={icon}
-      style={{ display: "inline-block", textTransform: "capitalize" }}
+      style={{ textTransform: "capitalize" }}
       size="small"
-      onClick={() => {
-        httpRequest({
-          method: "GET",
-          url: `/node/view/${node.dataId}/`,
-          resolve: (data: Node) => {
-            openNewTab(data[urlProp]!);
-            dispatch(updateNode(data));
-          },
-          reject: (error: string) =>
-            dispatch(updateNode({ ...node, error: error })),
-          onStart: () => setLoading(true),
-          onFinish: () => setLoading(false),
-        });
-      }}
       loading={loading}
+      disabled={updating && !loading}
+      onClick={() => {
+        setLoading(true);
+        backend.get.nodeDtaleView({ dispatch, page, dataId });
+      }}
     >
       {page}
     </Button>
   );
 };
 
-const DtaleTableButton: React.FC<{
-  dispatch: ActionDispatch;
-  node: Node;
-}> = ({ dispatch, node }) => (
-  <DtaleButton
-    dispatch={dispatch}
-    node={node}
-    page="table"
-    urlProp="dtaleUrl"
-    icon={<TableOutlined />}
-  />
+const DtaleTableButton: React.FC<BaseButtonProps> = (props) => (
+  <DtaleButton page="table" icon={<TableOutlined />} {...props} />
 );
 
-const DtaleChartsButton: React.FC<{
-  dispatch: ActionDispatch;
-  node: Node;
-}> = ({ dispatch, node }) => (
-  <DtaleButton
-    dispatch={dispatch}
-    node={node}
-    page="charts"
-    urlProp="dtaleChartsUrl"
-    icon={<LineChartOutlined />}
-  />
+const DtaleChartsButton: React.FC<BaseButtonProps> = (props) => (
+  <DtaleButton page="charts" icon={<LineChartOutlined />} {...props} />
 );
 
-const DtaleDescribeButton: React.FC<{
-  dispatch: ActionDispatch;
-  node: Node;
-}> = ({ dispatch, node }) => (
-  <DtaleButton
-    dispatch={dispatch}
-    node={node}
-    page="describe"
-    urlProp="dtaleDescribeUrl"
-    icon={<PictureOutlined />}
-  />
+const DtaleDescribeButton: React.FC<BaseButtonProps> = (props) => (
+  <DtaleButton page="describe" icon={<PictureOutlined />} {...props} />
 );
 
-const DtaleCorrelationsButton: React.FC<{
-  dispatch: ActionDispatch;
-  node: Node;
-}> = ({ dispatch, node }) => (
-  <DtaleButton
-    dispatch={dispatch}
-    node={node}
-    page="correlations"
-    urlProp="dtaleCorrelationsUrl"
-    icon={<DotChartOutlined />}
-  />
+const DtaleCorrelationsButton: React.FC<BaseButtonProps> = (props) => (
+  <DtaleButton page="correlations" icon={<DotChartOutlined />} {...props} />
 );
 
-const PandasProfileReportButton: React.FC<{
-  dispatch: ActionDispatch;
-  node: Node;
-}> = ({ dispatch, node }) => (
+const PandasProfileReportButton: React.FC<BaseButtonProps> = ({
+  dispatch,
+  dataId,
+  updating,
+}) => (
   <Button
     size="small"
     onClick={() => {
-      openNewTab(`/node/profile-report/${node.dataId}/`);
-      httpRequest({
-        method: "GET",
-        url: `/node/watch-profile-report-builder/${node.dataId}/`,
-        resolve: (data) => {
-          if (data.ok) {
-            dispatch(updateNode(data.node));
-          }
-        },
-        reject: (error) => null,
-      });
+      backend.get.nodeProfileReport({ dispatch, dataId });
     }}
     icon={<ProfileOutlined />}
   >
@@ -127,34 +81,18 @@ const PandasProfileReportButton: React.FC<{
   </Button>
 );
 
-export const ShutdownButton: React.FC<{
-  dispatch: ActionDispatch;
-  node: Node;
-}> = ({ dispatch, node }) => {
-  const [loading, setLoading] = useState<boolean>(false);
+const ShutdownButton: React.FC<BaseButtonProps> = ({
+  dispatch,
+  dataId,
+  updating,
+}) => {
   return (
     <Button
       danger
       size="small"
       title="shut down"
-      onClick={() => {
-        setLoading(true);
-        httpRequest({
-          method: "GET",
-          url: `node/kill/${node.dataId}/`,
-          resolve: (data: Node) => {
-            dispatch(updateNode(data));
-            setLoading(false);
-          },
-          reject: (error) => {
-            const newNode = { ...node, error: error };
-            dispatch(updateNode(newNode));
-            setLoading(false);
-          },
-        });
-      }}
-      disabled={!node.dtaleUrl}
-      loading={loading}
+      onClick={() => backend.get.nodeDtaleShutdown({ dispatch, dataId })}
+      loading={updating}
     >
       Shut down
     </Button>
@@ -195,28 +133,34 @@ const NodeActionsContainer = styled.div`
 
 export const DataViewerButtons: React.FC<{
   node: Node;
+  settings: Settings;
   dispatch: ActionDispatch;
-}> = (props) => (
-  <NodeActionsContainer>
-    <div className="node-action-buttons">
-      {props.node.dtaleUrl ? <ShutdownButton {...props} /> : null}
-      <DtaleTableButton {...props} />
-      <DtaleChartsButton {...props} />
-      <DtaleCorrelationsButton {...props} />
-      <DtaleDescribeButton {...props} />
-      <PandasProfileReportButton {...props} />
-    </div>
-    <div className="node-action-link">
-      {props.node.dtaleUrl ? (
-        <a href={props.node.dtaleUrl} target="_blank" rel="noopener noreferrer">
-          {props.node.dtaleUrl}
-        </a>
-      ) : (
-        <div className="node-action-link-placeholder">...</div>
-      )}
-    </div>
-  </NodeActionsContainer>
-);
+}> = ({ node, settings, dispatch }) => {
+  const props = { dispatch, dataId: node.dataId, updating: node.updating };
+  return (
+    <NodeActionsContainer>
+      <div className="node-action-buttons">
+        {node.dtaleUrl ? <ShutdownButton {...props} /> : null}
+        <DtaleTableButton {...props} />
+        <DtaleChartsButton {...props} />
+        <DtaleCorrelationsButton {...props} />
+        <DtaleDescribeButton {...props} />
+        {settings.disableProfileReports ? null : (
+          <PandasProfileReportButton {...props} />
+        )}
+      </div>
+      <div className="node-action-link">
+        {node.dtaleUrl ? (
+          <a href={node.dtaleUrl} target="_blank" rel="noopener noreferrer">
+            {node.dtaleUrl}
+          </a>
+        ) : (
+          <div className="node-action-link-placeholder">...</div>
+        )}
+      </div>
+    </NodeActionsContainer>
+  );
+};
 
 const StyledCacheDisplay = styled.div`
   .clear-cache-button {
@@ -245,18 +189,9 @@ export const CacheButtons: React.FC<{
         </Typography.Text>
         <button
           className="clear-cache-button"
-          onClick={() => {
-            httpRequest({
-              method: "GET",
-              url: `/node/clear-cache/${node.dataId}/`,
-              resolve: (data: Node) => {
-                dispatch(updateNode(data));
-              },
-              reject: (error) => {
-                dispatch(updateNode({ ...node, error: error }));
-              },
-            });
-          }}
+          onClick={() =>
+            backend.get.nodeClearCache({ dispatch, dataId: node.dataId })
+          }
         >
           <Typography.Text
             type="danger"

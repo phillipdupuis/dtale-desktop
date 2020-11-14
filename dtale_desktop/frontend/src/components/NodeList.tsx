@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { List, Input, Typography } from "antd";
-import { Node } from "../store/state";
+import { Node, Settings } from "../store/state";
 import { ActionDispatch } from "../store/actions";
 import { DataViewerButtons, CacheButtons } from "./NodeWidgets";
 
 export const NodeList: React.FC<{
   nodes: Node[];
+  settings: Settings;
   dispatch: ActionDispatch;
-}> = ({ nodes, dispatch }) => {
+}> = ({ nodes, settings, dispatch }) => {
   const [filter, setFilter] = useState<string>("");
 
   const isVisible = (node: Node): boolean =>
@@ -30,7 +31,13 @@ export const NodeList: React.FC<{
       dataSource={nodes.filter(isVisible)}
       renderItem={(node) => (
         <List.Item
-          actions={[<DataViewerButtons dispatch={dispatch} node={node} />]}
+          actions={[
+            <DataViewerButtons
+              settings={settings}
+              dispatch={dispatch}
+              node={node}
+            />,
+          ]}
         >
           <List.Item.Meta
             title={
@@ -40,7 +47,12 @@ export const NodeList: React.FC<{
             }
             description={
               node.error ? (
-                <Typography.Text type="danger" strong ellipsis style={{ maxWidth: "100%" }}>
+                <Typography.Text
+                  type="danger"
+                  strong
+                  ellipsis
+                  style={{ maxWidth: "100%" }}
+                >
                   {node.error}
                 </Typography.Text>
               ) : (

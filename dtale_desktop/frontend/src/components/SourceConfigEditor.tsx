@@ -2,13 +2,8 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { Drawer, Button, Input, Alert, notification } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
-import { httpRequest } from "../utils/requests";
-import {
-  ActionDispatch,
-  addSources,
-  updateSource,
-  setSelectedSource,
-} from "../store/actions";
+import { backend } from "../utils/interface";
+import { ActionDispatch, setSelectedSource } from "../store/actions";
 import { Source } from "../store/state";
 import { PythonEditor } from "./PythonEditor";
 
@@ -44,32 +39,20 @@ const Editor: React.FC<{
 
   const submitCreate = () => {
     if (checkRequired()) {
-      const { nodes, ...updatedSource } = clone;
-      httpRequest({
-        method: "POST",
-        url: "/source/create/",
-        body: updatedSource,
-        resolve: (data: Source) => {
-          dispatch(addSources([data]));
-          dispatch(setSelectedSource(null));
-        },
-        reject: (error) => setError(error),
+      backend.post.sourceCreate({
+        dispatch,
+        body: clone,
+        handleError: setError,
       });
     }
   };
 
   const submitUpdate = () => {
     if (checkRequired()) {
-      const { nodes, ...updatedSource } = clone;
-      httpRequest({
-        method: "POST",
-        url: "/source/update/",
-        body: updatedSource,
-        resolve: (data: Source) => {
-          dispatch(updateSource(data));
-          dispatch(setSelectedSource(null));
-        },
-        reject: (error) => setError(error),
+      backend.post.sourceUpdate({
+        dispatch,
+        body: clone,
+        handleError: setError,
       });
     }
   };
