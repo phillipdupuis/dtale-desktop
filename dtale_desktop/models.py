@@ -452,5 +452,14 @@ def register_existing_source(
         pass
 
 
+def get_node_by_data_id(data_id: str) -> Node:
+    """
+    Reusable as dependency for taking a data_id path parameter and returning the Node instance.
+    """
+    for source in SOURCES.values():
+        if data_id in source.nodes:
+            return source.nodes[data_id]
+
+
 DataSourceSerialized.update_forward_refs()
 Node.update_forward_refs()

@@ -4,7 +4,7 @@ import { Modal, Switch } from "antd";
 import styled from "styled-components";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { setOpenModal, ActionDispatch } from "../store/actions";
-import { backend } from "../utils/interface";
+import { updateLayout } from "../store/backend";
 import { Source, RootState } from "../store/state";
 
 type LayoutChange = Pick<Source, "id" | "visible" | "sortValue">;
@@ -77,7 +77,7 @@ const Editor: React.FC<{
         sortValue: after.sortValue,
       }));
     if (changes.length > 0) {
-      backend.post.sourceListLayoutChanges({ dispatch, body: changes });
+      updateLayout(dispatch, changes);
     }
   };
 

@@ -1,8 +1,10 @@
 import React from "react";
 import AceEditor, { IAceEditorProps } from "react-ace";
 
+import "ace-builds/src-min-noconflict/ext-language_tools";
 import "ace-builds/src-noconflict/mode-python";
 import "ace-builds/src-noconflict/theme-monokai";
+import "ace-builds/src-noconflict/snippets/python";
 
 type RequiredProps = "name" | "value" | "onChange" | "width";
 
@@ -32,6 +34,9 @@ const PythonEditor: React.FC<Props> = ({
     minLines={minLines}
     editorProps={editorProps}
     wrapEnabled={wrapEnabled}
+    enableBasicAutocompletion={true}
+    enableLiveAutocompletion={true}
+    enableSnippets={true}
     {...additionalProps}
   />
 );

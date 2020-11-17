@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { Drawer, Button, Input, Alert, notification } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
-import { backend } from "../utils/interface";
 import { ActionDispatch, setSelectedSource } from "../store/actions";
+import { createSource, updateSource } from "../store/backend";
 import { Source } from "../store/state";
 import { PythonEditor } from "./PythonEditor";
 
@@ -34,26 +34,6 @@ const Editor: React.FC<{
       return false;
     } else {
       return true;
-    }
-  };
-
-  const submitCreate = () => {
-    if (checkRequired()) {
-      backend.post.sourceCreate({
-        dispatch,
-        body: clone,
-        handleError: setError,
-      });
-    }
-  };
-
-  const submitUpdate = () => {
-    if (checkRequired()) {
-      backend.post.sourceUpdate({
-        dispatch,
-        body: clone,
-        handleError: setError,
-      });
     }
   };
 
@@ -133,10 +113,12 @@ const Editor: React.FC<{
           block
           style={{ marginTop: 10 }}
           onClick={() => {
-            if (mode === "new") {
-              submitCreate();
-            } else {
-              submitUpdate();
+            if (checkRequired()) {
+              if (mode === "new") {
+                createSource(dispatch, clone, setError);
+              } else {
+                updateSource(dispatch, clone, setError);
+              }
             }
           }}
         >

@@ -43,7 +43,7 @@ def test_root_dir(app, tmpdir):
 
 def test_frontend_view(app, client):
     response = client.get("/")
-    with open(os.path.join(app.REACT_APP_DIR, "index.html")) as f:
+    with open(os.path.join(app.settings.REACT_APP_DIR, "index.html")) as f:
         assert response.text == f.read()
 
 
@@ -72,44 +72,50 @@ _mock_source_json = {
 
 
 def test_create_source_success(app, client, read_file):
+    from dtale_desktop.models import SOURCES
+    from dtale_desktop.file_system import fs
+
     response = client.post("/source/create/", json=_mock_source_json)
     assert response.status_code == 200
 
     data = response.json()
-    assert data["name"] == _mock_source_json["name"]
-    assert data["listPaths"] == _mock_source_json["listPaths"]
-    assert data["getData"] == _mock_source_json["getData"]
-    assert data["id"] in app.SOURCES
+    source = data["sources"][0]
+    assert source["name"] == _mock_source_json["name"]
+    assert source["listPaths"] == _mock_source_json["listPaths"]
+    assert source["getData"] == _mock_source_json["getData"]
+    assert source["id"] in SOURCES
 
     # Check if the package was built appropriately
-    assert data["packagePath"] == os.path.join(app.fs.LOADERS_DIR, data["packageName"])
+    assert source["packagePath"] == os.path.join(fs.LOADERS_DIR, source["packageName"])
     assert _list_paths_sample == read_file(
-        os.path.join(data["packagePath"], "list_paths.py")
+        os.path.join(source["packagePath"], "list_paths.py")
     )
     assert _get_data_sample == read_file(
-        os.path.join(data["packagePath"], "get_data.py")
+        os.path.join(source["packagePath"], "get_data.py")
     )
 
 
 def test_load_source_nodes(app, client):
-    initial = client.post("/source/create/", json=_mock_source_json).json()
-    source = app.SOURCES[initial["id"]]
+    from dtale_desktop.models import SOURCES
+
+    initial = client.post("/source/create/", json=_mock_source_json).json()["sources"][
+        0
+    ]
+    source = SOURCES[initial["id"]]
     assert len(initial["nodes"]) == 0
     assert len(source.nodes) == 0
     assert len(initial["nodes"]) == len(source.nodes)
     assert initial["nodesFullyLoaded"] is False
 
-    "/source/{source_id}/load-nodes/"
-
-    after_one = client.get(f"/source/{source.id}/load-nodes/?limit=30").json()
+    after_one = client.get(f"/source/{source.id}/load-nodes/?limit=30").json()["source"]
     assert len(after_one["nodes"]) == 30
     assert len(source.nodes) == 30
     assert after_one["nodesFullyLoaded"] is False
 
-    after_two = client.get(f"/source/{source.id}/load-nodes/").json()
+    after_two = client.get(f"/source/{source.id}/load-nodes/").json()["source"]
     assert len(after_two["nodes"]) == len(source.nodes)
     assert len(after_two["nodes"]) > len(after_one["nodes"])
     assert after_two["nodesFullyLoaded"] is True
 
-    after_three = client.get(f"/source/{source.id}/load-nodes/").json()
+    after_three = client.get(f"/source/{source.id}/load-nodes/").json()["source"]
     assert after_three == after_two

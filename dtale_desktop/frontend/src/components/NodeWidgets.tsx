@@ -1,9 +1,6 @@
 import React, { Fragment, useState, ReactNode, useEffect } from "react";
 import styled from "styled-components";
-import { Node, Settings } from "../store/state";
-import { ActionDispatch } from "../store/actions";
 import { Button, Typography } from "antd";
-import { backend } from "../utils/interface";
 import {
   LineChartOutlined,
   TableOutlined,
@@ -11,6 +8,14 @@ import {
   PictureOutlined,
   ProfileOutlined,
 } from "@ant-design/icons";
+import { Node, Settings } from "../store/state";
+import { ActionDispatch } from "../store/actions";
+import {
+  openDtaleView,
+  killDtaleInstance,
+  clearCachedData,
+  openProfileReport,
+} from "../store/backend";
 
 type BaseButtonProps = {
   dispatch: ActionDispatch;
@@ -41,7 +46,7 @@ const DtaleButton: React.FC<
       disabled={updating && !loading}
       onClick={() => {
         setLoading(true);
-        backend.get.nodeDtaleView({ dispatch, page, dataId });
+        openDtaleView(dispatch, dataId, page);
       }}
     >
       {page}
@@ -72,9 +77,7 @@ const PandasProfileReportButton: React.FC<BaseButtonProps> = ({
 }) => (
   <Button
     size="small"
-    onClick={() => {
-      backend.get.nodeProfileReport({ dispatch, dataId });
-    }}
+    onClick={() => openProfileReport(dispatch, dataId)}
     icon={<ProfileOutlined />}
   >
     Profile
@@ -91,7 +94,7 @@ const ShutdownButton: React.FC<BaseButtonProps> = ({
       danger
       size="small"
       title="shut down"
-      onClick={() => backend.get.nodeDtaleShutdown({ dispatch, dataId })}
+      onClick={() => killDtaleInstance(dispatch, dataId)}
       loading={updating}
     >
       Shut down
@@ -189,9 +192,7 @@ export const CacheButtons: React.FC<{
         </Typography.Text>
         <button
           className="clear-cache-button"
-          onClick={() =>
-            backend.get.nodeClearCache({ dispatch, dataId: node.dataId })
-          }
+          onClick={() => clearCachedData(dispatch, node.dataId)}
         >
           <Typography.Text
             type="danger"

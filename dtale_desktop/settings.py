@@ -6,6 +6,9 @@ Environment variables that can be used to configure settings:
     By default this is ~/.dtaledesktop
 - DTALEDESKTOP_ADDITIONAL_LOADERS_DIRS:
     comma-separated list of directory paths that should be scanned for data sources upon startup.
+- DTALEDESKTOP_EXCLUDE_DEFAULT_LOADERS:
+    "true" if the default loaders should not be included in the list of data sources.
+    These are the loaders which look for json, csv, and excel files in your home directory.
 
 - DTALEDESKTOP_DISABLE_ADD_DATA_SOURCES:
     "true" if the "Add Data Source" button should not be shown.
@@ -20,6 +23,10 @@ Environment variables that can be used to configure settings:
     "true" if browser should not open upon startup
 - DTALEDESKTOP_DISABLE_DTALE_CELL_EDITS
     "true" if editing cells in dtale should be disabled.
+
+- DTALEDESKTOP_ENABLE_WEBSOCKET_CONNECTIONS
+    "true" if real-time updates should be pushed to clients via websocket connection.
+    This is only useful/necessary if you are running it as a service and multiple users can access it simultaneously.
 
 - DTALEDESKTOP_HOST
 - DTALEDESKTOP_PORT
@@ -48,6 +55,7 @@ _SENTINEL = object()
 class EnvVars(str, Enum):
     ROOT_DIR = "DTALEDESKTOP_ROOT_DIR"
     ADDITIONAL_LOADERS_DIRS = "DTALEDESKTOP_ADDITIONAL_LOADERS_DIRS"
+    EXCLUDE_DEFAULT_LOADERS = "DTALEDESKTOP_EXCLUDE_DEFAULT_LOADERS"
 
     DISABLE_ADD_DATA_SOURCES = "DTALEDESKTOP_DISABLE_ADD_DATA_SOURCES"
     DISABLE_EDIT_DATA_SOURCES = "DTALEDESKTOP_DISABLE_EDIT_DATA_SOURCES"
@@ -55,6 +63,8 @@ class EnvVars(str, Enum):
     DISABLE_PROFILE_REPORTS = "DTALEDESKTOP_DISABLE_PROFILE_REPORTS"
     DISABLE_OPEN_BROWSER = "DTALEDESKTOP_DISABLE_OPEN_BROWSER"
     DISABLE_DTALE_CELL_EDITS = "DTALEDESKTOP_DISABLE_DTALE_CELL_EDITS"
+
+    ENABLE_WEBSOCKET_CONNECTIONS = "DTALEDESKTOP_ENABLE_WEBSOCKET_CONNECTIONS"
 
     HOST = "DTALEDESKTOP_HOST"
     PORT = "DTALEDESKTOP_PORT"
@@ -78,6 +88,10 @@ def _env_int(var_name: str, default: Optional[int] = None) -> Optional[int]:
 class _Settings:
     ROOT_DIR: str
     ADDITIONAL_LOADERS_DIRS: List[str]
+    EXCLUDE_DEFAULT_LOADERS: bool
+
+    REACT_APP_DIR: str
+    TEMPLATES_DIR: str
 
     DISABLE_ADD_DATA_SOURCES: bool
     DISABLE_EDIT_DATA_SOURCES: bool
@@ -85,6 +99,8 @@ class _Settings:
     DISABLE_PROFILE_REPORTS: bool
     DISABLE_OPEN_BROWSER: bool
     DISABLE_DTALE_CELL_EDITS: bool
+
+    ENABLE_WEBSOCKET_CONNECTIONS: bool
 
     _HOST: str
     _PORT: int
@@ -109,6 +125,15 @@ class _Settings:
             for x in os.getenv(EnvVars.ADDITIONAL_LOADERS_DIRS, "").split(",")
             if x != ""
         ]
+        self.EXCLUDE_DEFAULT_LOADERS = _env_bool(EnvVars.EXCLUDE_DEFAULT_LOADERS)
+
+        self.REACT_APP_DIR = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "frontend", "build"
+        )
+
+        self.TEMPLATES_DIR = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "templates"
+        )
 
         self.DISABLE_ADD_DATA_SOURCES = _env_bool(EnvVars.DISABLE_ADD_DATA_SOURCES)
         self.DISABLE_EDIT_DATA_SOURCES = _env_bool(EnvVars.DISABLE_EDIT_DATA_SOURCES)
@@ -116,6 +141,10 @@ class _Settings:
         self.DISABLE_PROFILE_REPORTS = _env_bool(EnvVars.DISABLE_PROFILE_REPORTS)
         self.DISABLE_OPEN_BROWSER = _env_bool(EnvVars.DISABLE_OPEN_BROWSER)
         self.DISABLE_DTALE_CELL_EDITS = _env_bool(EnvVars.DISABLE_DTALE_CELL_EDITS)
+
+        self.ENABLE_WEBSOCKET_CONNECTIONS = _env_bool(
+            EnvVars.ENABLE_WEBSOCKET_CONNECTIONS
+        )
 
         self._HOST = os.getenv(EnvVars.HOST, None)
         self._PORT = _env_int(EnvVars.PORT, None)
@@ -153,6 +182,7 @@ class _Settings:
         disable_edit_data_sources: bool
         disable_edit_layout: bool
         disable_profile_reports: bool
+        enable_websocket_connections: bool
 
     def serialize(self) -> Serialized:
         return self.Serialized(
@@ -160,6 +190,7 @@ class _Settings:
             disable_edit_data_sources=self.DISABLE_EDIT_DATA_SOURCES,
             disable_edit_layout=self.DISABLE_EDIT_LAYOUT,
             disable_profile_reports=self.DISABLE_PROFILE_REPORTS,
+            enable_websocket_connections=self.ENABLE_WEBSOCKET_CONNECTIONS,
         )
 
 

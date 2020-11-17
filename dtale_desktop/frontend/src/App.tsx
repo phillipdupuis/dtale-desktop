@@ -2,22 +2,31 @@ import React, { useEffect, useReducer } from "react";
 import "antd/dist/antd.css";
 import "./App.css";
 import { MainPage } from "./pages/MainPage";
-import { addSources, updateSettings } from "./store/actions";
 import { reducer } from "./store/reducers";
 import { initialState } from "./store/state";
-import { backend } from "./utils/interface";
+import {
+  getSettings,
+  getSources,
+  openWebSocketConnection,
+} from "./store/backend";
 
 const App: React.FC<{}> = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    if (state.sources === undefined) {
-      backend.get.sources({ dispatch });
-    }
     if (state.settings === undefined) {
-      backend.get.settings({ dispatch });
+      getSettings(dispatch);
+    }
+    if (state.sources === undefined) {
+      getSources(dispatch);
     }
   }, []);
+
+  useEffect(() => {
+    if (state.settings?.enableWebsocketConnections) {
+      openWebSocketConnection(dispatch);
+    }
+  }, [state.settings]);
 
   return <MainPage state={state} dispatch={dispatch} />;
 };

@@ -37,6 +37,7 @@ export type Settings = {
   disableEditDataSources: boolean;
   disableEditLayout: boolean;
   disableProfileReports: boolean;
+  enableWebsocketConnections: boolean;
 };
 
 export interface RootState {

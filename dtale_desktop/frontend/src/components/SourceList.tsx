@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
-import { Source, Settings } from "../store/state";
-import { setSelectedSource, ActionDispatch } from "../store/actions";
+import styled from "styled-components";
 import { Collapse, Tag, Popover, Space, Button, Typography } from "antd";
 import { SettingOutlined, ReloadOutlined } from "@ant-design/icons";
 import { NodeList } from "./NodeList";
-import styled from "styled-components";
-import { backend } from "../utils/interface";
+import { Source, Settings } from "../store/state";
+import { setSelectedSource, ActionDispatch } from "../store/actions";
+import { getSourceNodes } from "../store/backend";
 
 const StyledTag = styled(Tag)`
   margin-right: 0;
@@ -37,10 +37,6 @@ export const SourceList: React.FC<{
   settings: Settings;
   dispatch: ActionDispatch;
 }> = ({ sources, settings, dispatch }) => {
-  const loadMoreNodes = (source: Source) => {
-    backend.get.sourceNodes({ dispatch, sourceId: source.id, limit: 50 });
-  };
-
   useEffect(() => {
     sources.forEach((source) => {
       if (
@@ -49,7 +45,7 @@ export const SourceList: React.FC<{
         !source.error &&
         Object.keys(source.nodes || {}).length === 0
       ) {
-        loadMoreNodes(source);
+        getSourceNodes(dispatch, source.id, 50);
       }
     });
   });
@@ -73,7 +69,7 @@ export const SourceList: React.FC<{
                     loading={source.updating}
                     onClick={(event) => {
                       event.stopPropagation();
-                      loadMoreNodes(source);
+                      getSourceNodes(dispatch, source.id, 50);
                     }}
                   >
                     Load more
