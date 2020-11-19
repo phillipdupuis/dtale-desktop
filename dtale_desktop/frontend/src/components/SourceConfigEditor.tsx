@@ -2,13 +2,8 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { Drawer, Button, Input, Alert, notification } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
-import { httpRequest } from "../utils/requests";
-import {
-  ActionDispatch,
-  addSources,
-  updateSource,
-  setSelectedSource,
-} from "../store/actions";
+import { ActionDispatch, setSelectedSource } from "../store/actions";
+import { createSource, updateSource } from "../store/backend";
 import { Source } from "../store/state";
 import { PythonEditor } from "./PythonEditor";
 
@@ -42,44 +37,31 @@ const Editor: React.FC<{
     }
   };
 
-  const submitCreate = () => {
-    if (checkRequired()) {
-      const { nodes, ...updatedSource } = clone;
-      httpRequest({
-        method: "POST",
-        url: "/source/create/",
-        body: updatedSource,
-        resolve: (data: Source) => {
-          dispatch(addSources([data]));
-          dispatch(setSelectedSource(null));
-        },
-        reject: (error) => setError(error),
-      });
-    }
-  };
-
-  const submitUpdate = () => {
-    if (checkRequired()) {
-      const { nodes, ...updatedSource } = clone;
-      httpRequest({
-        method: "POST",
-        url: "/source/update/",
-        body: updatedSource,
-        resolve: (data: Source) => {
-          dispatch(updateSource(data));
-          dispatch(setSelectedSource(null));
-        },
-        reject: (error) => setError(error),
-      });
-    }
-  };
-
   return (
     <Drawer
       title={mode === "new" ? "Add Data Source" : "Data Source"}
       width={800}
       onClose={() => dispatch(setSelectedSource(null))}
       visible={true}
+      footer={
+        source.editable ? (
+          <Button
+            type="primary"
+            block
+            onClick={() => {
+              if (checkRequired()) {
+                if (mode === "new") {
+                  createSource(dispatch, clone, setError);
+                } else {
+                  updateSource(dispatch, clone, setError);
+                }
+              }
+            }}
+          >
+            {mode === "new" ? "Create source" : "Save changes"}
+          </Button>
+        ) : null
+      }
     >
       {error ? (
         <Alert
@@ -128,9 +110,7 @@ const Editor: React.FC<{
         onChange={(v) => {
           clone.listPaths = v;
         }}
-        width="720"
-        maxLines={16}
-        minLines={16}
+        width="100%"
       />
       <Label>get_data.py</Label>
       <PythonEditor
@@ -140,26 +120,8 @@ const Editor: React.FC<{
         onChange={(v) => {
           clone.getData = v;
         }}
-        width="720"
-        maxLines={16}
-        minLines={16}
+        width="100%"
       />
-      {source.editable ? (
-        <Button
-          type="primary"
-          block
-          style={{ marginTop: 10 }}
-          onClick={() => {
-            if (mode === "new") {
-              submitCreate();
-            } else {
-              submitUpdate();
-            }
-          }}
-        >
-          {mode === "new" ? "Create source" : "Save changes"}
-        </Button>
-      ) : null}
     </Drawer>
   );
 };

@@ -1,5 +1,6 @@
 import React from "react";
 import { Layout, Button, Space, PageHeader, Spin } from "antd";
+import { GithubOutlined as Github } from "@ant-design/icons";
 import {
   ActionDispatch,
   setOpenModal,
@@ -69,7 +70,19 @@ export const MainPage: React.FC<{
     <Layout>
       <StyledContent>
         <PageHeader
-          title="D-Tale Desktop"
+          title={
+            <Space>
+              <span>D-Tale Desktop</span>
+              <Button
+                icon={<Github />}
+                shape="circle-outline"
+                title="github"
+                href="https://github.com/phillipdupuis/dtale-desktop"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            </Space>
+          }
           subTitle=""
           extra={
             <Space>
@@ -94,7 +107,11 @@ export const MainPage: React.FC<{
           }
         />
         {appIsLoaded ? (
-          <SourceList sources={state.sources!} dispatch={dispatch} />
+          <SourceList
+            settings={state.settings!}
+            sources={state.sources!}
+            dispatch={dispatch}
+          />
         ) : (
           <Spin />
         )}

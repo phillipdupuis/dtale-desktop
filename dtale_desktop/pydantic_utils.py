@@ -8,6 +8,7 @@ def _snake_to_camel(string: str) -> str:
 
 class BaseApiModel(BaseModel):
     class Config:
+        extra = "ignore"
         alias_generator = _snake_to_camel
         allow_population_by_field_name = True
 

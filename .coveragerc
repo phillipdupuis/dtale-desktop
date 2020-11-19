@@ -1,0 +1,11 @@
+[report]
+omit =
+    build/**
+    dist/**
+    dtaledesktop.egg-info/**
+    venv/**
+    tests/**
+    media/**
+    /private/**
+exclude_lines =
+    if __name__ == .__main__.:
