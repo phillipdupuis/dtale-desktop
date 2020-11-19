@@ -41,9 +41,7 @@ async def node_build_profile_report(
         await UpdateNode(node=node).broadcast(exclude=[client_id])
     else:
         await node.build_profile_report()
-    return RedirectResponse(
-        url=f"http://{settings.HOST}:{settings.PORT}/node/view-profile-report/{node.data_id}/"
-    )
+    return RedirectResponse(url=f"/node/view-profile-report/{node.data_id}/")
 
 
 @router.get("/node/watch-profile-report-builder/{data_id}/", response_model=UpdateNode)

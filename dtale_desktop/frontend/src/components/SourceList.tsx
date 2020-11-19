@@ -51,7 +51,7 @@ export const SourceList: React.FC<{
   });
 
   return (
-    <Collapse defaultActiveKey={[]} accordion>
+    <Collapse defaultActiveKey={[]}>
       {sources
         .filter((source) => source.visible)
         .map((source) => (
