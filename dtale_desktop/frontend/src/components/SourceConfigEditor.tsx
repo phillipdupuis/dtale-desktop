@@ -43,6 +43,25 @@ const Editor: React.FC<{
       width={800}
       onClose={() => dispatch(setSelectedSource(null))}
       visible={true}
+      footer={
+        source.editable ? (
+          <Button
+            type="primary"
+            block
+            onClick={() => {
+              if (checkRequired()) {
+                if (mode === "new") {
+                  createSource(dispatch, clone, setError);
+                } else {
+                  updateSource(dispatch, clone, setError);
+                }
+              }
+            }}
+          >
+            {mode === "new" ? "Create source" : "Save changes"}
+          </Button>
+        ) : null
+      }
     >
       {error ? (
         <Alert
@@ -91,9 +110,7 @@ const Editor: React.FC<{
         onChange={(v) => {
           clone.listPaths = v;
         }}
-        width="720"
-        maxLines={16}
-        minLines={16}
+        width="100%"
       />
       <Label>get_data.py</Label>
       <PythonEditor
@@ -103,28 +120,8 @@ const Editor: React.FC<{
         onChange={(v) => {
           clone.getData = v;
         }}
-        width="720"
-        maxLines={16}
-        minLines={16}
+        width="100%"
       />
-      {source.editable ? (
-        <Button
-          type="primary"
-          block
-          style={{ marginTop: 10 }}
-          onClick={() => {
-            if (checkRequired()) {
-              if (mode === "new") {
-                createSource(dispatch, clone, setError);
-              } else {
-                updateSource(dispatch, clone, setError);
-              }
-            }
-          }}
-        >
-          {mode === "new" ? "Create source" : "Save changes"}
-        </Button>
-      ) : null}
     </Drawer>
   );
 };

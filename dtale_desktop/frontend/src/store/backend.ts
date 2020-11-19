@@ -16,6 +16,7 @@ type Dispatcher = React.Dispatch<Action>;
 type BackendRequestProps = {
   dispatch: Dispatcher;
   url: string;
+  method?: "GET" | "POST" | "DELETE";
   body?: Object;
   params?: Record<string, any>;
   onStart?: () => void;
@@ -27,6 +28,7 @@ type BackendRequestProps = {
 const backendRequest = ({
   dispatch,
   url,
+  method,
   body,
   params,
   onStart,
@@ -41,7 +43,7 @@ const backendRequest = ({
     url = `${url}?${new URLSearchParams(params).toString()}`;
   }
   fetch(url, {
-    method: body === undefined ? "GET" : "POST",
+    method: method || (body ? "POST" : "GET"),
     headers: {
       "Content-Type": "application/json",
       "Client-Id": clientIdentifier,
@@ -119,6 +121,7 @@ export const killDtaleInstance = (
   backendRequest({
     dispatch,
     url: `/node/kill/${dataId}/`,
+    method: "DELETE",
     onStart: () => dispatch(setNodeUpdating(dataId, true)),
     onFinish: () => dispatch(setNodeUpdating(dataId, false)),
   });
@@ -130,6 +133,7 @@ export const clearCachedData = (
   backendRequest({
     dispatch,
     url: `/node/clear-cache/${dataId}/`,
+    method: "DELETE",
   });
 
 export const updateLayout = (
@@ -177,6 +181,8 @@ export const openProfileReport = (
   backendRequest({
     dispatch,
     url: `/node/watch-profile-report-builder/${dataId}/`,
+    onStart: () => dispatch(setNodeUpdating(dataId, true)),
+    onFinish: () => dispatch(setNodeUpdating(dataId, false)),
   });
 };
 
@@ -186,7 +192,6 @@ type WebSocketMessageData =
 
 const webSocketEndpoint = (): string => {
   const host = window.location.host;
-  return "ws://localhost:5000/ws/" + clientIdentifier + "/";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${protocol}//${host}/ws/${clientIdentifier}/`;
 };

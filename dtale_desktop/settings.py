@@ -114,7 +114,16 @@ class _Settings:
     def __init__(self):
         if self._instance is not _SENTINEL:
             raise Exception("_Settings is a singleton")
+        self._setup()
 
+    def refresh(self) -> None:
+        self._setup()
+
+    def _setup(self) -> None:
+        """
+        Set the value for each setting based on enviroment variables.
+        Separate from __init__ so the settings can be refreshed programmatically (if desired).
+        """
         self._instance = self
 
         self.ROOT_DIR = os.getenv(

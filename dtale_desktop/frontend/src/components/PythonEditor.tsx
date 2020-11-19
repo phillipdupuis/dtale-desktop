@@ -16,9 +16,9 @@ const PythonEditor: React.FC<Props> = ({
   value,
   onChange,
   width,
+  minLines = 16,
+  maxLines = 32,
   theme = "monokai",
-  maxLines = 20,
-  minLines = 4,
   editorProps = { $blockScrolling: true },
   wrapEnabled = true,
   ...additionalProps
@@ -30,8 +30,8 @@ const PythonEditor: React.FC<Props> = ({
     onChange={onChange}
     width={width}
     theme={theme}
-    maxLines={maxLines}
     minLines={minLines}
+    maxLines={maxLines}
     editorProps={editorProps}
     wrapEnabled={wrapEnabled}
     enableBasicAutocompletion={true}

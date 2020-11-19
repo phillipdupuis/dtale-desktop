@@ -74,15 +74,30 @@ const PandasProfileReportButton: React.FC<BaseButtonProps> = ({
   dispatch,
   dataId,
   updating,
-}) => (
-  <Button
-    size="small"
-    onClick={() => openProfileReport(dispatch, dataId)}
-    icon={<ProfileOutlined />}
-  >
-    Profile
-  </Button>
-);
+}) => {
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (loading && !updating) {
+      setLoading(false);
+    }
+  }, [updating]);
+
+  return (
+    <Button
+      size="small"
+      loading={loading}
+      disabled={updating && !loading}
+      onClick={() => {
+        setLoading(true);
+        openProfileReport(dispatch, dataId);
+      }}
+      icon={<ProfileOutlined />}
+    >
+      Profile
+    </Button>
+  );
+};
 
 const ShutdownButton: React.FC<BaseButtonProps> = ({
   dispatch,

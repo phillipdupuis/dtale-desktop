@@ -22,7 +22,7 @@ async def node_view_dtale_instance(
     return response
 
 
-@router.get("/node/kill/{data_id}/", response_model=UpdateNode)
+@router.delete("/node/kill/{data_id}/", response_model=UpdateNode)
 async def node_kill_dtale_instance(
     node: Node = Depends(get_node_by_data_id), client_id: int = Header(None)
 ):
@@ -33,7 +33,7 @@ async def node_kill_dtale_instance(
     return response
 
 
-@router.get("/node/clear-cache/{data_id}/", response_model=UpdateNode)
+@router.delete("/node/clear-cache/{data_id}/", response_model=UpdateNode)
 async def node_clear_cache(
     node: Node = Depends(get_node_by_data_id), client_id: int = Header(None)
 ):

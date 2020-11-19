@@ -71,5 +71,5 @@ async def execute_profile_report_builder(
     else:
         builder = psutil.Popen(args)
 
-    while builder.is_running():
+    while builder.poll() is None:
         await asyncio.sleep(1)
