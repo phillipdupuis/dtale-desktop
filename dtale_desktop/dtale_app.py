@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import dtale
 import pandas as pd
 import requests
-from dtale import utils as _utils
+from dtale import global_state, utils as _utils
 
 from dtale_desktop.settings import settings
 
@@ -20,6 +20,8 @@ DTALE_INTERNAL_ROOT_URL = _utils.build_url(DTALE_PORT, DTALE_HOST)
 DTALE_EXTERNAL_ROOT_URL = settings.DTALE_ROOT_URL or DTALE_INTERNAL_ROOT_URL
 
 app = dtale.app.build_app(DTALE_INTERNAL_ROOT_URL, host=DTALE_HOST, reaper_on=False)
+
+global_state.set_app_settings({"hide_shutdown": True})
 
 
 def run():
@@ -39,7 +41,6 @@ def launch_instance(data: pd.DataFrame, data_id: str) -> dtale.app.DtaleData:
         data_id=data_id,
         ignore_duplicate=True,
         allow_cell_edits=not settings.DISABLE_DTALE_CELL_EDITS,
-        hide_shutdown=True,
     )
 
 
@@ -48,7 +49,7 @@ def get_main_url(data_id: str) -> str:
 
 
 def get_charts_url(data_id: str) -> str:
-    return urljoin(DTALE_EXTERNAL_ROOT_URL, f"/charts/{data_id}")
+    return urljoin(DTALE_EXTERNAL_ROOT_URL, f"/dtale/charts/{data_id}")
 
 
 def get_describe_url(data_id: str) -> str:
