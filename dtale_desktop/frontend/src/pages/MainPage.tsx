@@ -1,6 +1,9 @@
 import React from "react";
 import { Layout, Button, Space, PageHeader, Spin } from "antd";
-import { GithubOutlined as Github } from "@ant-design/icons";
+import {
+  GithubOutlined as GithubIcon,
+  ApiOutlined as ApiIcon,
+} from "@ant-design/icons";
 import {
   ActionDispatch,
   setOpenModal,
@@ -74,10 +77,18 @@ export const MainPage: React.FC<{
             <Space>
               <span>D-Tale Desktop</span>
               <Button
-                icon={<Github />}
+                icon={<GithubIcon />}
                 shape="circle-outline"
                 title="github"
                 href="https://github.com/phillipdupuis/dtale-desktop"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+              <Button
+                icon={<ApiIcon />}
+                shape="circle-outline"
+                title="API documentation"
+                href="/docs"
                 target="_blank"
                 rel="noopener noreferrer"
               />
@@ -119,6 +130,12 @@ export const MainPage: React.FC<{
           <SourceConfigEditor
             source={state.selectedSource}
             dispatch={dispatch}
+            templates={(state.sources || []).map((s) => ({
+              id: s.id,
+              name: s.name,
+              listPaths: s.listPaths,
+              getData: s.getData,
+            }))}
           />
         ) : null}
         {appIsLoaded && sourcesExist && !state.settings!.disableEditLayout ? (

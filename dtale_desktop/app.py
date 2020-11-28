@@ -14,7 +14,12 @@ from dtale_desktop.settings import settings
 from dtale_desktop.subprocesses import launch_browser_opener
 from dtale_desktop.websocket_connections import websocket_path, websocket_endpoint
 
-app = FastAPI(title="D-Tale Desktop")
+_description = f"""
+API Documentation for the backend routes.
+It can also be viewed using <a href="{settings.ROOT_URL}/redoc" target="_blank" rel="noopener noreferrer">redoc</a>.
+"""
+
+app = FastAPI(title="D-Tale Desktop", description=_description)
 
 app.mount(
     "/static",

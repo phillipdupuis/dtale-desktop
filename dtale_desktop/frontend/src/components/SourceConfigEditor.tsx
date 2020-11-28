@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Drawer, Button, Input, Alert, notification } from "antd";
+import { Drawer, Button, Input, Alert, notification, Select } from "antd";
 import { CopyOutlined } from "@ant-design/icons";
 import { ActionDispatch, setSelectedSource } from "../store/actions";
 import { createSource, updateSource } from "../store/backend";
-import { Source } from "../store/state";
+import { Source, SourceTemplate } from "../store/state";
 import { PythonEditor } from "./PythonEditor";
 
 const Label = styled.div`
@@ -17,8 +17,18 @@ const Editor: React.FC<{
   clone: Source;
   mode: "edit" | "new";
   dispatch: ActionDispatch;
-}> = ({ source, clone, mode, dispatch }) => {
+  templates?: SourceTemplate[];
+}> = ({ source, clone, mode, dispatch, templates }) => {
   const [error, setError] = useState<string | null>(null);
+  const [template, setTemplate] = useState<SourceTemplate | undefined>(
+    undefined
+  );
+
+  const applyTemplate = (template: SourceTemplate): void => {
+    setTemplate(template);
+    clone.listPaths = template.listPaths;
+    clone.getData = template.getData;
+  };
 
   const checkRequired = (): boolean => {
     const requiredFields = ["name", "listPaths", "getData"] as const;
@@ -93,8 +103,8 @@ const Editor: React.FC<{
         />
       )}
       <Input
-        style={{ marginTop: 5, marginBottom: 5 }}
         addonBefore="Name"
+        style={{ marginTop: 5, marginBottom: 5 }}
         disabled={!source.editable}
         defaultValue={clone.name}
         onChange={(e) => {
@@ -102,6 +112,25 @@ const Editor: React.FC<{
         }}
         size="small"
       />
+      {mode === "new" && templates ? (
+        <Input.Group style={{ marginTop: 5, marginBottom: 5 }}>
+          <span className="ant-input-group-addon">Template</span>
+          <Select
+            size="small"
+            style={{ width: "100%" }}
+            placeholder="Select a template"
+            onChange={(id: SourceTemplate["id"]) => {
+              applyTemplate(templates.find((t) => t.id === id)!);
+            }}
+          >
+            {templates.map((t) => (
+              <Select.Option value={t.id} key={t.id}>
+                {t.name}
+              </Select.Option>
+            ))}
+          </Select>
+        </Input.Group>
+      ) : null}
       <Label>list_paths.py</Label>
       <PythonEditor
         readOnly={!source.editable}
@@ -130,11 +159,13 @@ const Editor: React.FC<{
 export const SourceConfigEditor: React.FC<{
   source: Source;
   dispatch: ActionDispatch;
-}> = ({ source, dispatch }) => (
+  templates?: SourceTemplate[];
+}> = ({ source, dispatch, templates }) => (
   <Editor
     source={source}
     clone={{ ...source }}
     mode={source.name !== "" ? "edit" : "new"}
     dispatch={dispatch}
+    templates={templates}
   />
 );

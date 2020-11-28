@@ -32,6 +32,8 @@ export type Source = {
   saveData: string;
 } & StatefulResourceProps;
 
+export type SourceTemplate = Pick<Source, "id" | "name" | "listPaths" | "getData">;
+
 export type Settings = {
   disableAddDataSources: boolean;
   disableEditDataSources: boolean;
