@@ -19,12 +19,18 @@ API Documentation for the backend routes.
 It can also be viewed using <a href="{settings.ROOT_URL}/redoc" target="_blank" rel="noopener noreferrer">redoc</a>.
 """
 
-app = FastAPI(title="D-Tale Desktop", description=_description)
+app = FastAPI(title=settings.APP_TITLE, description=_description)
 
 app.mount(
     "/static",
     StaticFiles(directory=os.path.join(settings.REACT_APP_DIR, "static")),
     name="static",
+)
+
+app.mount(
+    "/themes",
+    StaticFiles(directory=os.path.join(settings.REACT_APP_DIR, "themes")),
+    name="themes",
 )
 
 
@@ -70,7 +76,7 @@ def run():
     dtale_app.run()
 
     uvicorn.run(
-        app, host=socket.gethostbyname(settings.HOST), port=settings.PORT, debug=True
+        app, host=socket.gethostbyname(settings.HOST), port=settings.PORT, debug=True,
     )
 
 

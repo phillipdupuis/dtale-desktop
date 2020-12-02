@@ -35,6 +35,8 @@ export type Source = {
 export type SourceTemplate = Pick<Source, "id" | "name" | "listPaths" | "getData">;
 
 export type Settings = {
+  appTitle: string;
+  appHeader: string;
   disableAddDataSources: boolean;
   disableEditDataSources: boolean;
   disableEditLayout: boolean;

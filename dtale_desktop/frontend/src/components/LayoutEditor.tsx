@@ -15,9 +15,9 @@ const StyledList = styled.div`
   width: 100%;
   margin-top: 5px;
   margin-bottom: 5px;
-  border: 1px solid lightgray;
+  border: var(--styled-border);
   div {
-    border-bottom: 1px solid lightgray;
+    border-bottom: var(--styled-border);
   }
   div:last-child {
     border-bottom: none;
@@ -31,10 +31,13 @@ const StyledListItem = styled.div`
   height: 100%;
   cursor: pointer;
   &:hover {
-    background-color: #d3ecfa;
+    background-color: var(--styled-hover-bg-color);
   }
   .visibility-toggle {
     margin-left: auto;
+  }
+  .ant-switch-handle {
+    border-bottom: none;
   }
 `;
 
@@ -122,7 +125,7 @@ const Editor: React.FC<{
                           ? itemProvided.draggableProps.style
                           : {
                               ...itemProvided.draggableProps.style,
-                              background: "#bae7ff",
+                              background: "var(--styled-hover-bg-color)",
                             }
                       }
                     >

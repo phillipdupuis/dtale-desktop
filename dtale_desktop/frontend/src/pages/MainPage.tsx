@@ -13,6 +13,7 @@ import { RootState, Source } from "../store/state";
 import { SourceList } from "../components/SourceList";
 import { SourceConfigEditor } from "../components/SourceConfigEditor";
 import { LayoutEditor } from "../components/LayoutEditor";
+import { ThemeController } from "../components/ThemeController";
 import styled from "styled-components";
 
 const { Content } = Layout;
@@ -75,7 +76,11 @@ export const MainPage: React.FC<{
         <PageHeader
           title={
             <Space>
-              <span>D-Tale Desktop</span>
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: state.settings?.appHeader || "...",
+                }}
+              />
               <Button
                 icon={<GithubIcon />}
                 shape="circle-outline"
@@ -92,6 +97,7 @@ export const MainPage: React.FC<{
                 target="_blank"
                 rel="noopener noreferrer"
               />
+              <ThemeController />
             </Space>
           }
           subTitle=""

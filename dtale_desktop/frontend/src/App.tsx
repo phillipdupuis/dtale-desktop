@@ -1,6 +1,4 @@
 import React, { useEffect, useReducer } from "react";
-import "antd/dist/antd.css";
-import "./App.css";
 import { MainPage } from "./pages/MainPage";
 import { reducer } from "./store/reducers";
 import { initialState } from "./store/state";
@@ -25,6 +23,9 @@ const App: React.FC<{}> = () => {
   useEffect(() => {
     if (state.settings?.enableWebsocketConnections) {
       openWebSocketConnection(dispatch);
+    }
+    if (state.settings?.appTitle) {
+      document.title = state.settings.appTitle;
     }
   }, [state.settings]);
 

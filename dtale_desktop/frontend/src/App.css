@@ -1,9 +1,0 @@
-@import "~antd/dist/antd.compact.css";
-
-[data-theme="dark"] .site-layout-content {
-background: #141414;
-}
-
-[data-theme="dark"] .logo {
-background: rgba(255,255,255,0.3);
-}
