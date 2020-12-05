@@ -30,7 +30,7 @@ install_requires = [
 
 setup(
     name="dtaledesktop",
-    version="0.0.13",
+    version="0.0.14",
     description="Manage your D-Tale instances",
     license="MIT",
     long_description=readme(),

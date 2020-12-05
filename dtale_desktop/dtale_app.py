@@ -4,7 +4,6 @@ from urllib.parse import urljoin
 
 import dtale
 import pandas as pd
-import requests
 from dtale import global_state, utils as _utils
 
 from dtale_desktop.settings import settings
@@ -61,4 +60,4 @@ def get_correlations_url(data_id: str) -> str:
 
 
 def kill_instance(data_id: str) -> None:
-    requests.get(urljoin(DTALE_EXTERNAL_ROOT_URL, f"/dtale/cleanup/{data_id}"))
+    global_state.cleanup(data_id)
