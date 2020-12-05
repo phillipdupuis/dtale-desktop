@@ -39,6 +39,21 @@ Environment variables that can be used to configure settings:
     Added in order to support running dtaledesktop in k8s - by using different domain names for the main app and the
     dtale app, the ingress controller can use that (domain name) to determine which port requests should be sent to.
 
+- DTALEDESKTOP_APP_TITLE
+    string, the title that will be applied to the app.
+    This will also be used as the header in the front end if it's specified but "DTALEDESKTOP_APP_HEADER" is not.
+    Default value is "D-Tale Desktop".
+- DTALEDESKTOP_APP_HEADER:
+    string, the html that will be used for the app header (in the top left of the screen).
+    If you want to mark it up (add link(s), icons, whatever) you can do that -- any valid html is accepted.
+    Default value is "D-Tale Desktop";
+- DTALEDESKTOP_APP_FAVICON
+    optional, favicon filepath. File extension should be ".ico"
+- DTALEDESKTOP_APP_LOGO_192
+    optional, path to a .png file for a 192 x 192 logo.
+- DTALEDESKTOP_APP_LOGO_512
+    optional, path to a .png file for a 512 x 512 logo.
+
 """
 import os
 import socket
@@ -72,6 +87,12 @@ class EnvVars(str, Enum):
 
     DTALE_PORT = "DTALEDESKTOP_DTALE_PORT"
     DTALE_ROOT_URL = "DTALEDESKTOP_DTALE_ROOT_URL"
+
+    APP_TITLE = "DTALEDESKTOP_APP_TITLE"
+    APP_HEADER = "DTALEDESKTOP_APP_HEADER"
+    APP_FAVICON = "DTALEDESKTOP_APP_FAVICON"
+    APP_LOGO_192 = "DTALEDESKTOP_APP_LOGO_192"
+    APP_LOGO_512 = "DTALEDESKTOP_APP_LOGO_512"
 
 
 def _env_bool(var_name: str, default: bool = False) -> bool:
@@ -108,6 +129,12 @@ class _Settings:
 
     DTALE_PORT: Optional[int]
     DTALE_ROOT_URL: Optional[str]
+
+    APP_TITLE: str
+    APP_HEADER: str
+    APP_FAVICON: str
+    APP_LOGO_192: str
+    APP_LOGO_512: str
 
     _instance = _SENTINEL
 
@@ -162,6 +189,18 @@ class _Settings:
         self.DTALE_PORT = _env_int(EnvVars.DTALE_PORT, None)
         self.DTALE_ROOT_URL = os.getenv(EnvVars.DTALE_ROOT_URL, None)
 
+        self.APP_TITLE = os.getenv(EnvVars.APP_TITLE, "D-Tale Desktop")
+        self.APP_HEADER = os.getenv(EnvVars.APP_HEADER, self.APP_TITLE)
+        self.APP_FAVICON = os.getenv(
+            EnvVars.APP_FAVICON, os.path.join(self.REACT_APP_DIR, "favicon.ico")
+        )
+        self.APP_LOGO_192 = os.getenv(
+            EnvVars.APP_LOGO_192, os.path.join(self.REACT_APP_DIR, "logo192.png")
+        )
+        self.APP_LOGO_512 = os.getenv(
+            EnvVars.APP_LOGO_512, os.path.join(self.REACT_APP_DIR, "logo512.png")
+        )
+
     @property
     def HOST(self) -> str:
         if self._HOST is None:
@@ -187,6 +226,8 @@ class _Settings:
         return self._ROOT_URL
 
     class Serialized(BaseApiModel):
+        app_title: str
+        app_header: str
         disable_add_data_sources: bool
         disable_edit_data_sources: bool
         disable_edit_layout: bool
@@ -195,6 +236,8 @@ class _Settings:
 
     def serialize(self) -> Serialized:
         return self.Serialized(
+            app_title=self.APP_TITLE,
+            app_header=self.APP_HEADER,
             disable_add_data_sources=self.DISABLE_ADD_DATA_SOURCES,
             disable_edit_data_sources=self.DISABLE_EDIT_DATA_SOURCES,
             disable_edit_layout=self.DISABLE_EDIT_LAYOUT,

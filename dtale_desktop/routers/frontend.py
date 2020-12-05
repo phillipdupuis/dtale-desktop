@@ -22,17 +22,17 @@ async def manifest():
 
 @router.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    with open(os.path.join(settings.REACT_APP_DIR, "favicon.ico"), "rb") as f:
+    with open(settings.APP_FAVICON, "rb") as f:
         return Response(content=f.read(), media_type="image/x-icon")
 
 
 @router.get("/logo192.png", include_in_schema=False)
 async def logo192():
-    with open(os.path.join(settings.REACT_APP_DIR, "logo192.png"), "rb") as f:
+    with open(settings.APP_LOGO_192, "rb") as f:
         return Response(content=f.read(), media_type="image/png")
 
 
 @router.get("/logo512.png", include_in_schema=False)
 async def logo512():
-    with open(os.path.join(settings.REACT_APP_DIR, "logo512.png"), "rb") as f:
+    with open(settings.APP_LOGO_512, "rb") as f:
         return Response(content=f.read(), media_type="image/png")
