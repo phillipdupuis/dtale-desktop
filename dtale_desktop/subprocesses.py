@@ -1,8 +1,7 @@
 import asyncio
+import subprocess
 import sys
 from argparse import ArgumentParser
-
-import psutil
 
 
 def open_browser():
@@ -53,23 +52,13 @@ def build_profile_report():
 
 
 def launch_browser_opener(url: str) -> None:
-    psutil.Popen(["dtaledesktop_open_browser", url])
+    subprocess.Popen(["dtaledesktop_open_browser", url])
 
 
 async def execute_profile_report_builder(
     data_path: str, output_path: str, title: str
 ) -> None:
     args = ["dtaledesktop_profile_report", data_path, output_path, title]
-
-    for p in psutil.Process().children(recursive=True):
-        try:
-            if p.cmdline() == args:
-                builder = p
-                break
-        except psutil.ZombieProcess:
-            continue
-    else:
-        builder = psutil.Popen(args)
-
+    builder = subprocess.Popen(args)
     while builder.poll() is None:
         await asyncio.sleep(1)

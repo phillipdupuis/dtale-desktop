@@ -25,13 +25,12 @@ install_requires = [
     "aiofiles",
     "aiohttp",
     "typing_extensions",
-    "psutil",
     "pandas-profiling",
 ]
 
 setup(
     name="dtaledesktop",
-    version="0.0.11",
+    version="0.0.12",
     description="Manage your D-Tale instances",
     license="MIT",
     long_description=readme(),
