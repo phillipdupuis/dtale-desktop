@@ -20,6 +20,7 @@ from pydantic.fields import Field
 
 from dtale_desktop import dtale_app
 from dtale_desktop.file_system import fs
+from dtale_desktop.logger import get_logger
 from dtale_desktop.pydantic_utils import BaseApiModel
 from dtale_desktop.settings import settings
 from dtale_desktop.source_code_tools import (
@@ -30,6 +31,8 @@ from dtale_desktop.source_code_tools import (
     load_data_source_package,
 )
 from dtale_desktop.subprocesses import execute_profile_report_builder
+
+logger = get_logger()
 
 _ListPaths = Callable[..., Union[List[str], Awaitable[List[str]]]]
 _GetData = Callable[[str], Union[pd.DataFrame, Awaitable[pd.DataFrame]]]
@@ -79,7 +82,7 @@ class DataSource:
             self._save_data = save_data
             self._path_generator = None
             self._validate()
-        except BaseException as e:
+        except Exception as e:
             self.error = str(e)
             raise e
 
@@ -169,7 +172,7 @@ class DataSource:
                     if count == limit:
                         return
             self.nodes_fully_loaded = True
-        except BaseException as e:
+        except Exception as e:
             self.error = str(e)
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -187,7 +190,7 @@ class DataSource:
             for node in self.nodes.values():
                 if node.dtale_url:
                     node.shut_down()
-        except BaseException as e:
+        except Exception as e:
             self.error = str(e)
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -261,7 +264,7 @@ class DataSourceSerialized(BaseApiModel):
             source.register()
             self.id_ = source.id
             return source
-        except BaseException as e:
+        except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     def deserialize(self, overwrite_existing: bool = False) -> DataSource:
@@ -382,7 +385,9 @@ class Node(BaseApiModel):
                 while not instance.is_up():
                     await asyncio.sleep(1)
             return instance
-        except BaseException as e:
+        except Exception as e:
+            # The 'error' attribute set here will be displayed in the front-end
+            logger.exception(str(e))
             self.error = str(e)
 
     def shut_down(self):
@@ -395,7 +400,7 @@ class Node(BaseApiModel):
             self.dtale_charts_url = None
             self.dtale_describe_url = None
             self.dtale_correlations_url = None
-        except BaseException as e:
+        except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     async def build_profile_report(self) -> None:
@@ -411,11 +416,10 @@ class Node(BaseApiModel):
                     title=f"{self.source.name} - {self.path}",
                 )
                 if not fs.profile_report_exists(self.data_id):
-                    raise HTTPException(
-                        status_code=500,
-                        detail="The profile report failed to build for some reason",
+                    raise Exception(
+                        "The profile report failed to build for some reason"
                     )
-        except BaseException as e:
+        except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     async def clear_cache(self) -> None:
@@ -425,8 +429,8 @@ class Node(BaseApiModel):
         try:
             fs.delete_all_cached_data(self.data_id)
             self.last_cached_at = None
-        except BaseException as e:
-            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 def register_existing_source(
@@ -448,8 +452,8 @@ def register_existing_source(
             editable=editable,
         )
         source.register()
-    except BaseException:
-        pass
+    except Exception as e:
+        logger.exception(str(e))
 
 
 def get_node_by_data_id(data_id: str) -> Node:

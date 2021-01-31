@@ -206,7 +206,7 @@ class _Settings:
         if self._HOST is None:
             try:
                 self._HOST = socket.gethostbyname("localhost")
-            except BaseException:
+            except Exception:
                 self._HOST = socket.gethostbyname(socket.gethostname())
         return self._HOST
 

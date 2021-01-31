@@ -15,7 +15,6 @@ classifiers = [
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
 ]
 
 install_requires = [
@@ -30,8 +29,8 @@ install_requires = [
 
 setup(
     name="dtaledesktop",
-    version="0.0.14",
-    description="Manage your D-Tale instances",
+    version="0.0.15",
+    description="Build a data visualization dashboard with simple snippets of python code",
     license="MIT",
     long_description=readme(),
     long_description_content_type="text/markdown",
