@@ -3,16 +3,21 @@ import socket
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from dtale_desktop import default_sources, routers, dtale_app
 from dtale_desktop.actions import UpdateSettings
 from dtale_desktop.file_system import fs
+from dtale_desktop.logger import get_logger
 from dtale_desktop.models import register_existing_source
 from dtale_desktop.settings import settings
 from dtale_desktop.subprocesses import launch_browser_opener
 from dtale_desktop.websocket_connections import websocket_path, websocket_endpoint
+
+logger = get_logger()
 
 _description = f"""
 API Documentation for the backend routes.
@@ -45,7 +50,17 @@ def register_any_existing_sources() -> None:
 
     for loaders_dir in [fs.LOADERS_DIR, *fs.ADDITIONAL_LOADERS_DIRS]:
         for path in (os.path.join(loaders_dir, p) for p in os.listdir(loaders_dir)):
-            register_existing_source(path)
+            if os.path.isdir(path):
+                register_existing_source(path)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request, exc: StarletteHTTPException):
+    """
+    Log the exception and then pass it through to the default handler
+    """
+    logger.exception(str(exc))
+    return await http_exception_handler(request, exc)
 
 
 @app.get("/health/")

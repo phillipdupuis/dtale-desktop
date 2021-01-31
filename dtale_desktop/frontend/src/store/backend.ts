@@ -50,7 +50,15 @@ const backendRequest = ({
     },
     body: JSON.stringify(body),
   })
-    .then((response) => response.json())
+    .then((response) => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        return response.json().then((errorData) => {
+          throw errorData.detail;
+        });
+      }
+    })
     .then((data) => {
       if (Array.isArray(data)) {
         data.forEach((action) => dispatch(action));
