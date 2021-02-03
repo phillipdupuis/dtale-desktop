@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 install_requires = [
-    "dtale==1.22.1",  # unpin this in the future
+    "dtale>=1.22.1",  # Earlier versions probably also work, just need to figure out how far back...
     "fastapi",
     "uvicorn[standard]",
     "aiofiles",
@@ -29,7 +29,7 @@ install_requires = [
 
 setup(
     name="dtaledesktop",
-    version="0.0.15",
+    version="0.1.0",
     description="Build a data visualization dashboard with simple snippets of python code",
     license="MIT",
     long_description=readme(),
