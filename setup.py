@@ -29,7 +29,7 @@ install_requires = [
 
 setup(
     name="dtaledesktop",
-    version="0.1.0",
+    version="0.1.2",
     description="Build a data visualization dashboard with simple snippets of python code",
     license="MIT",
     long_description=readme(),
