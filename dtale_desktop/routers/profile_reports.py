@@ -19,12 +19,21 @@ async def noad_profile_report_loading_page(data_id: str):
     This one is a bit weird because it is being opened in a new tab.
     We do this because building a profile report can take a LONG time, and we don't want to block the main app.
 
-    We return a static loading page which, when the window is ready, will fetch /node/build-profile-report/{data_id}/.
+    If the profile report output already exists, it's simple -- we just redirect you to the page for viewing it.
+
+    If it does not exist, however, we return a static loading page which will make display
+    a loading indicator and shoot off a request to /node/build-profile-report/{data_id}/.
     Once the report is built, the response will provide a url for viewing it.
     The promise resolves by redirecting the user to that URL.
     """
-    with open(os.path.join(settings.TEMPLATES_DIR, "loading_profile_report.html")) as f:
-        return f.read()
+    if fs.profile_report_exists(data_id):
+        return RedirectResponse(url=f"/node/view-profile-report/{data_id}/")
+    else:
+        with open(
+            os.path.join(settings.TEMPLATES_DIR, "loading_profile_report.html"),
+            encoding="utf-8",
+        ) as f:
+            return f.read()
 
 
 @router.get("/node/build-profile-report/{data_id}/", response_class=RedirectResponse)

@@ -1,4 +1,4 @@
-![preview](media/main_page.png)
+[![preview](https://raw.githubusercontent.com/phillipdupuis/dtale-desktop-media/master/images/light_mode_screenshot.png)](https://github.com/phillipdupuis/dtale-desktop)
 
 ---
 An interface for saving python scripts as permanent D-Tale launch points.
@@ -29,18 +29,25 @@ dtale_desktop.run()
 ---
 ### Motivation
 
-[D-Tale (or dtale)](https://github.com/man-group/dtale) is an extremely powerful and versatile tool for exploratory analysis of pandas dataframes.
+dtaledesktop simplifies the process of fetching data, cleaning/transforming it, and then performing exploratory data analysis. With dtaledesktop, that entire process is condensed into a single click.
 
-D-Tale Desktop builds on this by providing an interface which simplifies the process of fetching data, cleaning/transforming it, and *then* feeding it into D-Tale. You can save snippets of arbitrary python code for fetching/transforming data as permanent "entries", and you will then be able to execute that code and open dtale at any time by simply clicking a button.
+It does this by providing a dashboard GUI, and any python code which returns a pandas DataFrame can be saved to the dashboard as a widget. Users can then execute that code and explore the DataFrame in [dtale](https://github.com/man-group/dtale) or [pandas-profiling](https://github.com/pandas-profiling/pandas-profiling) by simply clicking one of the widget buttons. The code associated with that widget can also be edited directly from the dashboard, and upon doing so the dashboard is updated in real-time.
 
-Side note, this is also a working example of how you can serve d-tale alongside another app in kubernetes. Will provide an example soon, that's a todo.
+Here's a simple example of using this workflow:
+1. launch `dtaledesktop` from a terminal. The dashboard automatically opens up in your web browser.
+2. click the 'Add Data Source' button, fill out the form like so, and click save:
+![preview](https://raw.githubusercontent.com/phillipdupuis/dtale-desktop-media/master/images/walkthrough_step_1_add_source.png)
+3. and bam! You now have a new 'Stocks' section on your dashboard. It will be there every time you launch dtaledesktop, and the python code can be edited directly from the dashboard:
+![preview](https://raw.githubusercontent.com/phillipdupuis/dtale-desktop-media/master/images/walkthrough_step_2_view_section.png)
+
+If at some point you decide you want to watch Apple too, all you need to do is click the "Settings" button and add "AAPL" to the list of stock symbols. It will immediately appear in the dashboard below TSLA.
 
 ---
 ### How it works
 
-The front end is written with react. State is managed via useReducer, for no particular reason other than that I wanted to try it out (instead of redux).
+The front end is written with react, using a mixture of ant-design and styled-components.
 
-The back end actually consists of TWO apps - the main application (built using FastAPI) and the D-Tale application. These applications listen on separate ports. The main application allows users to write or edit code in real-time, and it is able to do this by saving the submitted code as persistent files and then using importlib.util to build and then import the resulting modules.
+The back end is written in python, and it actually consists of TWO apps which listen on separate ports. The main one is an asynchronous FastAPI application, and it responsible for communicating with the dashboard, interacting with the file system, and executing user-defined code for fetching/transforming data. It is able to do this by saving the submitted code as persistent files and then using importlib.util to build and then import the resulting modules. The second app is for running dtale instances, and it is a synchronous flask application.
 
 ---
 ### Settings
