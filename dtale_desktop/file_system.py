@@ -98,7 +98,7 @@ class _FileSystem:
         return os.path.exists(self.profile_report_path(data_id))
 
     def read_profile_report(self, data_id: str) -> str:
-        with open(self.profile_report_path(data_id)) as f:
+        with open(self.profile_report_path(data_id), encoding="utf-8") as f:
             return f.read()
 
     def delete_profile_report(self, data_id: str) -> None:
