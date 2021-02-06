@@ -27,6 +27,8 @@ install_requires = [
     "pandas-profiling",
 ]
 
+finance_requirements = ["alpha_vantage"]
+
 setup(
     name="dtaledesktop",
     version="0.1.2",
@@ -39,6 +41,7 @@ setup(
     author_email="phillip_dupuis@alumni.brown.edu",
     url="https://github.com/phillipdupuis/dtale-desktop",
     install_requires=install_requires,
+    extras_require={"finance": finance_requirements},
     packages=find_packages(),
     package_data={
         "dtale_desktop": [
