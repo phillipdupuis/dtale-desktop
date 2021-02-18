@@ -50,6 +50,33 @@ The front end is written with react, using a mixture of ant-design and styled-co
 The back end is written in python, and it actually consists of TWO apps which listen on separate ports. The main one is an asynchronous FastAPI application, and it responsible for communicating with the dashboard, interacting with the file system, and executing user-defined code for fetching/transforming data. It is able to do this by saving the submitted code as persistent files and then using importlib.util to build and then import the resulting modules. The second app is for running dtale instances, and it is a synchronous flask application.
 
 ---
+### Developers/Contributing
+
+First, you'll want to clone the repo and install the python dependencies:
+```bash
+$ git clone https://github.com/phillipdupuis/dtale-desktop.git
+$ cd dtale-desktop
+$ python setup.py develop
+```
+
+Then you'll need to install the javascript dependencies and build the react app:
+```bash
+$ cd dtale_desktop/frontend
+$ npm install
+$ npm run build
+```
+
+And now you should be able to launch it like so:
+```bash
+$ python dtale_desktop/app.py
+```
+
+If you want to modify the front-end, do the following:
+1. Launch the python app in the normal way
+2. Change the "proxy" setting in `frontend/package.json` to point at the host/port the python app is running on.
+3. `npm start` to launch the react app. It will run on a different port, but will proxy unknown requests to the python app.
+
+---
 ### Settings
 
 #### Disabling features:
