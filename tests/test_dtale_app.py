@@ -1,3 +1,4 @@
+from hashlib import md5
 import pandas as pd
 import pytest
 
@@ -23,15 +24,14 @@ def data():
 
 @pytest.fixture
 def data_id():
-    return "abc123"
+    return md5("abc123".encode("utf8")).hexdigest()
 
 
 def test_launch_instance(dtale_app, data, data_id):
     instance = dtale_app.launch_instance(data=data, data_id=data_id)
-    assert instance.is_up()
     assert (
         instance.main_url()
-        == f"{dtale_app.DTALE_EXTERNAL_ROOT_URL}/dtale/main/{data_id}"
+        == f"{dtale_app.DTALE_EXTERNAL_ROOT_URL}/dtale/main/{dtale_app._format_data_id(data_id)}"
     )
     pd.testing.assert_frame_equal(data, instance.data)
 
